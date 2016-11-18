@@ -1,5 +1,5 @@
-from sage.all import *
 from collections import defaultdict
+from sage.combinat.cartesian_product import CartesianProduct
 import subprocess   
 import dot2tex
 
@@ -32,18 +32,6 @@ def random_automaton(size, alphabet):
     return Automaton(transition,sample(states,1),sample(states,1),states,alphabet)
     
     
-def random_aperiodic_automaton_by_reject(size, alphabet, nb_fail=1000, max_size=1000, verbose=False):
-    for i in range(nb_fail):
-        if verbose:
-            print "Trying a new autotamaton (nb:"+str(i)+")"
-        A = random_automaton(size,alphabet)
-        S = TransitionSemiGroup(A,max_size=max_size)
-        if verbose:
-            print "Testing aperiodicity ..."
-        if S.is_equation_satisfied("(x)^wx=(x)^w",["x"],verbose=verbose-1):
-            return A
-    raise ValueError("no aperiodic SemiGroup has been generated")
- 
 class Automaton:
     def __init__(self, transitions, initial_states, final_states, states=None, alphabet=None):
         r"""
@@ -225,6 +213,7 @@ class Automaton:
             sage: d = {('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}     
             sage: A = Automaton(d,['p'],['q'])            
             sage: A.plot()
+            Graphics object consisting of 12 graphics primitives
                  
         """
         return self.to_graph().plot(edge_labels=True,talk=True)        
@@ -684,11 +673,11 @@ class Automaton:
 
             sage: d = {('p', 'a'): 'p', ('p', 'b'): ['q', 'p'], (frozenset(['a']), 'a'): 'b'}
             sage: A = Automaton(d,['p'],['q'])
-            sage: A._states
-            set(['q', 'p', 'b', frozenset(['a'])])
+            sage: sorted(A._states) 
+            [frozenset({'a'}), 'b', 'p', 'q']
             sage: A.rename_states()
-            sage: A._states
-            set([0, 1, 2, 3])
+            sage: sorted(A._states)
+            [0, 1, 2, 3]
         """
         l = list(self._states)
         states = set(range(len(l)))
@@ -829,23 +818,15 @@ class Automaton:
             sage: B
             Automaton of 2 states
             sage: B._states
-            set([0, 1])
-            sage: sorted(B._transitions.items())
-            [((0, 'a'), [1]), ((0, 'b'), [0]), ((1, 'a'), [1]), ((1, 'b'), [0])]
-            sage: B._initial_states
-            [1]
-            
+            {0, 1}            
+
         ::
         
             sage: C = A.minimal_automaton(algorithm="Brzozowski")
             sage: C
             Automaton of 2 states
             sage: C._states
-            set([0, 1])
-            sage: sorted(C._transitions.items())
-            [((0, 'a'), [0]), ((0, 'b'), [1]), ((1, 'a'), [0]), ((1, 'b'), [1])]
-            sage: C._initial_states
-            [0]
+            {0, 1}
             
         ::
         
@@ -853,12 +834,7 @@ class Automaton:
             sage: D
             Automaton of 2 states
             sage: D._states
-            set([0, 1])
-            sage: sorted(D._transitions.items())
-            [((0, 'a'), [1]), ((0, 'b'), [0]), ((1, 'a'), [1]), ((1, 'b'), [0])]
-            sage: D._initial_states
-            [1]
-    
+            {0, 1}    
         
 
         """        
