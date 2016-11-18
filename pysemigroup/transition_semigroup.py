@@ -1,5 +1,11 @@
-from sage.all import *
-load automata.sage
+from automata import Automaton
+from sage.graphs.digraph import DiGraph
+import os
+from sage.misc.latex import latex
+from sage.sets.finite_set_maps import FiniteSetMaps
+import dot2tex
+from sage.misc.cachefunc import cached_method
+
 class monoidElement(tuple):
     def __repr__(self):
         s = ""
@@ -56,24 +62,6 @@ def draw_box(box):
    
     return s+'\\end{tabular}'
                            
-def old_draw_box_dot(box,colors_list=False):
-    s = '"'
-    for x in box:
-        l = list(x)
-        u = str(l.pop())    
-        uns = u.replace("*","")
-        s = s + '{<'+uns+'>'+u
-        while len(l) > 0:
-            u = str(l.pop())    
-            uns = u.replace("*","")              
-            s = s+"| <"+uns+">"+u
-        s = s+"}|"
-    s = s[:len(s)-1]+'"'   
-    s = s.replace("['","")
-    s = s.replace("']","")
-    s = s.replace("'","")
-    s = s.replace("<>","<1>1")    
-    return s                        
 def draw_box_dot(box,idempotents,colors_list=False,):
     s = '<<table border="1" cellborder="1" CELLSPACING="0" cellpadding="4">'
     for L in box:
@@ -109,7 +97,8 @@ class TransitionSemiGroup(object):
         Transition semigroup
 
     EXAMPLES::
-
+    
+        sage: from pysemigroup import Automaton, TransitionSemiGroup  
         sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
         sage: A = Automaton(d,[0],[1])
         sage: S = TransitionSemiGroup(A)
@@ -120,7 +109,8 @@ class TransitionSemiGroup(object):
     def __init__(self, automaton, monoid=True,compute=False, max_size= 0):
         r"""
         EXAMPLES::
-
+        
+            sage: from pysemigroup import Automaton, TransitionSemiGroup  
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
@@ -144,6 +134,7 @@ class TransitionSemiGroup(object):
         r"""
         EXAMPLES::
         
+            sage: from pysemigroup import Automaton, TransitionSemiGroup          
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
@@ -166,7 +157,8 @@ class TransitionSemiGroup(object):
         string 
 
         EXAMPLES::
-                  
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
+                    
         """
 
         #from sage.plot.colors import rainbow
@@ -202,7 +194,7 @@ class TransitionSemiGroup(object):
             print "done."
 
         Edge = []
-        graph_viz = 'digraph {\n node [shape= none] \n'
+        graph_viz = 'digraph {node [shape= none] \n'
         for x in repre:
             if x == '' or x == ():
                 rx = '"1"'
@@ -253,13 +245,14 @@ class TransitionSemiGroup(object):
         r"""
         Return the representent of word in the semigroup
         
-        EXAMPLE::
-            
+        EXAMPLES::
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup                      
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0],  (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
             sage: A = Automaton(d,[1],[1])            
             sage: S = TransitionSemiGroup(A) 
             sage: S("abaaa")                   
-            'aa'
+            aa
 
         """
         return self.representent(word)        
@@ -288,17 +281,13 @@ class TransitionSemiGroup(object):
         
         EXAMPLES::
         
+            sage: from pysemigroup import Automaton, TransitionSemiGroup          
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0],  (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
             sage: A = Automaton(d,[1],[1])            
             sage: S = TransitionSemiGroup(A)                   
             sage: it = iter(S)
-            sage: for _ in range(6): next(it)
-            'a'
-            ''
-            'aa'
-            'b'
-            'ba'
-            'ab'
+            sage: sorted(it)
+            [1, a, aa, ab, b, ba]
         """
         for x in self.elements():
             yield x
@@ -328,12 +317,13 @@ class TransitionSemiGroup(object):
         -  ``verbose`` - boolean
 
         EXAMPLES::
-        
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup          
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
             sage: S.elements()
-            frozenset(['a', ''])
+            frozenset({1, a})
 
         """      
         A = self._generators
@@ -367,7 +357,6 @@ class TransitionSemiGroup(object):
                 Rep[ident] = monoidElement("")
                 Rep_rv[monoidElement("")] = ident
                 Sg.append(ident)        
-
         count = 0
         while len(last)>0:
             old = list(last)
@@ -389,7 +378,6 @@ class TransitionSemiGroup(object):
                         Ruv = Ru+Rv
                         Rep[v_u] = Ruv
                         Rep_rv[Ruv] = v_u
-
         self._Sg = Sg
         self._Representations = Rep
         self._Representations_rev = Rep_rv
@@ -417,12 +405,13 @@ class TransitionSemiGroup(object):
         - ``u``  - string or monoid element
 
         EXAMPLES::
-            
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
             sage: S.representent('aaa')
-            'a'
+            a
         """
         l = self.elements()        
         u = monoidElement(v)
@@ -450,11 +439,12 @@ class TransitionSemiGroup(object):
 
         EXAMPLES::
 
+            sage: from pysemigroup import Automaton, TransitionSemiGroup  
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
             sage: S.idempotents()
-            set([''])
+            {1}
 
         """
         self._compute_semigroup()
@@ -483,12 +473,13 @@ class TransitionSemiGroup(object):
 
         EXAMPLES::
 
+            sage: from pysemigroup import Automaton, TransitionSemiGroup  
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0],  (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
             sage: A = Automaton(d,[1],[1])            
             sage: S = TransitionSemiGroup(A)
             sage: G = S.cayley_graph()
             sage: G
-            Looped digraph on 6 vertices
+            Looped multi-digraph on 6 vertices
         """
         d = {}
         A = self._generators
@@ -522,12 +513,8 @@ class TransitionSemiGroup(object):
             G = DiGraph(list(set([(e[0],e[1]) for e in G.edges()])))
         return G         
 
-    def cayley_graphviz_string(self,edge_label=True, orientation="left_right",latex=True):
-        if latex:
-            ln = 8
-            s = 'digraph {\n ranksep=0.5;\n d2tdocpreamble = "\usetikzlibrary{automata}";\n d2tfigpreamble = "\\tikzstyle{every state}= []  \\tikzstyle{auto}= [fill=white]";\n node [style="state"];\n edge [lblstyle="auto",topath="bend right", len='+str(ln)+'  ]\n'
-        else:
-            s = 'digraph {\n node [margin=0 shape="circle" ]\n'
+    def cayley_graphviz_string(self,edge_label=True, orientation="left_right"):
+        s = 'digraph {\n node [margin=0 shape="circle" ]\n'
         Elements = set(self)
         while (len(Elements) > 0):
             e = Elements.pop()
@@ -550,7 +537,6 @@ class TransitionSemiGroup(object):
                     s = s + ' fontcolor="red"'
                 else:
                     s = s + ' fontcolor="blue"'
-
                 s = s +'];\n'
             s = s + '}\n'
         for x in self:        
@@ -572,8 +558,8 @@ class TransitionSemiGroup(object):
                     if y == x:
                         s =  s+ 'topath="loop above"'
                     s = s + '];\n'
-        s = s+'}'
-        return s
+        s = s+'}'    
+        return s    
 
     
     def idempotent_power(self,u):
@@ -585,12 +571,13 @@ class TransitionSemiGroup(object):
         -  ``u`` -  (word)
 
         EXAMPLES::
-            
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
             sage: S.idempotent_power('a')
-            ''
+            1
         """
         self._compute_semigroup()
         if isinstance(u,str) or isinstance(u,tuple):
@@ -619,13 +606,13 @@ class TransitionSemiGroup(object):
         -  ``E`` -  set 
 
         EXAMPLES::
-
+            sage: from pysemigroup import Automaton, TransitionSemiGroup  
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0],  (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
             sage: A = Automaton(d,[1],[1])  
             sage: S = TransitionSemiGroup(A)
             sage: E = set(S.elements())
             sage: S.pop_J_maximal(E)
-            ''
+            1
 
         """
         
@@ -649,7 +636,7 @@ class TransitionSemiGroup(object):
 
         
         EXAMPLES::
-            
+            sage: from pysemigroup import Automaton, TransitionSemiGroup             
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
@@ -712,12 +699,13 @@ class TransitionSemiGroup(object):
             integer s
         
         EXAMPLES::
-            
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: A = RegularLanguage("(a*b)^x",['a','b']) # not tested
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0], (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
-            sage: S.stablity_index()
+            sage: S.stability_index()
             2
         """
 
@@ -733,13 +721,14 @@ class TransitionSemiGroup(object):
             tuple (i,S) 
         
         EXAMPLES::
-            
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: A = RegularLanguage("(a*b)^x",['a','b']) # not tested
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0], (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
             sage: S.stable_semigroup()
-            (2, set(['aa', 'ab', 'ba']))
+            Transition SemiGroup of Automaton of 4 states
 
         """
         return self._stable()[0]
