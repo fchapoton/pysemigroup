@@ -4,13 +4,13 @@ from os import path
 
 # Get the long description from the README file
 here = path.abspath(path.dirname(__file__))
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
+with open(path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='pysemigroup',
     version=open("VERSION").read().strip(),
     description="A python implementation of semigroup algorithms.",
-    long_description=open('README.rst').read(),
+    long_description=open('README.md').read(),
     classifiers=[
       # How mature is this project? Common values are
       #   3 - Alpha
@@ -28,5 +28,5 @@ setup(name='pysemigroup',
     install_requires=['dot2tex'],
     url='http://github.com/charles-paperman/pysemigroup',
     license = "GPLv2+",
-    packages=['pysemigroups'],
+    packages=['pysemigroup'],
 )
