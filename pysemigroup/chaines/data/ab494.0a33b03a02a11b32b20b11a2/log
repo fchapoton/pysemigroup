@@ -1,0 +1,10 @@
+
+
+{(0, 'a'): [3], (3, 'b'): [0], (3, 'a'): [0], (2, 'a'): [1], (1, 'b'): [3], (2, 'b'): [2], (0, 'b'): [1], (1, 'a'): [2]}
+Size of monoid :12
+start computing pairs ...
+	 Actual level: 0...
+		Remaning to compute:12 		Remaning to compute:132 Done
+Done
+Pairs:
+Done

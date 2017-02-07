@@ -1,0 +1,20 @@
+digraph {
+ ranksep=0.5;
+ d2tdocpreamble = "\usetikzlibrary{automata}";
+ d2tfigpreamble = "\tikzstyle{every state}= [ draw=blue!50,very thick,fill=blue!20]  \tikzstyle{auto}= [fill=white]";
+ node [style="state"];
+ edge [lblstyle="auto",topath="bend right", len=4  ]
+  "0" [label="0",];
+  "1" [label="1",style = "state, accepting"];
+  "2" [label="2",];
+  "3" [label="3",];
+  "4" [label="4",style = "state, initial"];
+  "0" -> "2" [label="a"];
+  "0" -> "3" [label="b"];
+  "1" -> "0" [label="b,a"];
+  "2" -> "0" [label="b"];
+  "2" -> "1" [label="a"];
+  "3" -> "2" [label="a"];
+  "3" -> "4" [label="b"];
+  "4" -> "1" [label="b,a"];
+}

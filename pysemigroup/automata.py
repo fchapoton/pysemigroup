@@ -1,7 +1,11 @@
 from collections import defaultdict
 from sage.combinat.cartesian_product import CartesianProduct
 import subprocess   
-import dot2tex
+from copy import copy
+from sage.graphs.digraph import DiGraph
+from sage.calculus.var import var
+import os
+_star = var("_star")
 
 def CartesianProduct_aut(A,B):
     alpha1 = CartesianProduct(A._alphabet,B._alphabet).list()
@@ -49,6 +53,7 @@ class Automaton:
 
         EXAMPLES::
 
+            sage: from pysemigroup import Automaton
             sage: d={('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}
             sage: A= Automaton(d,['p'],['p'])
         """
@@ -90,6 +95,7 @@ class Automaton:
 
         EXAMPLES::
         
+            sage: from pysemigroup import Automaton
             sage: A = Automaton.from_letter('a')
             sage: A
             Automaton of 2 states
@@ -158,6 +164,7 @@ class Automaton:
 
         EXAMPLES:: 
        
+            sage: from pysemigroup import Automaton
             sage: d = {('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}     
             sage: A = Automaton(d,['p'],['q'])
             sage: B = A.to_theirs()
@@ -179,44 +186,7 @@ class Automaton:
              letter = t.word_in[0]
              transitions[(stateA,letter)].append(stateB)
         return Automaton(transitions, initial_states, final_states)
-    def to_graph(self):
-        r"""
-            Return a labelled Sage DiGraph
-
-            Examples::
-            
-            sage: d = {('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}     
-            sage: A = Automaton(d,['p'],['q'])            
-            sage: A.to_graph()
-            Looped digraph on 2 vertices
-                 
-        """
-        l = [(x[0],self._transitions[x][0],x[1]) for x in self._transitions]
-        l2 = []
-        for x in l:
-            for y in l:
-                if (x!=y) and (x[0]==y[0]) and (x[1]==y[1]):
-                    l2.append((x[0],x[1],x[2]+","+y[2]))
-                    if x in l:                   
-                        l.remove(x)
-                    if y in l:
-                        l.remove(y)
-        l.extend(l2)
-        return DiGraph(l, loops=True)
-
-    def plot(self):
-        r"""
-            Returns a graphics object representing the automaton.
-
-            Examples::
-            
-            sage: d = {('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}     
-            sage: A = Automaton(d,['p'],['q'])            
-            sage: A.plot()
-            Graphics object consisting of 12 graphics primitives
-                 
-        """
-        return self.to_graph().plot(edge_labels=True,talk=True)        
+       
         
     def to_theirs(self):
         r"""
@@ -224,6 +194,7 @@ class Automaton:
 
         EXAMPLES::
         
+            sage: from pysemigroup import Automaton
             sage: d = {('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}
             sage: A = Automaton(d,['p'],['q'])
             sage: A
@@ -267,32 +238,20 @@ class Automaton:
             file_dot = tmp_filename(".",".dot")
             file_gif = tmp_filename(".",".gif")
             f = file(file_dot,'w')
-            f.write(self.graphviz_string(latex=False))
+            f.write(self.graphviz_string())
             f.close()
         os.system('%s -Tgif %s -o %s; %s %s'%(prog,file_dot,file_gif,browser(),file_gif))
         
 
             
-    def _latex_(self, prog="dot",tikzedgelabels=False):
-        r"""
-        latex representation obtained with dot -> dot2tex.
-
-        EXAMPLES::
-            sage: d={('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}
-            sage: A= Automaton(d,['p'],['p'])
-            sage: A
-            Automaton of 2 states
-        """
-        latex.extra_preamble("")
-        latex.add_to_preamble("\\usepackage{tikz}\n\\usetikzlibrary{automata}")
-        s = dot2tex.dot2tex(self.graphviz_string(), format='tikz',figonly=True, prog=prog, crop=True, tikzedgelabels=tikzedgelabels,styleonly=True)
-        return s
 
     def __repr__(self):
         r"""
         String representation.
 
         EXAMPLES::
+
+            sage: from pysemigroup import Automaton
             sage: d={('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}
             sage: A= Automaton(d,['p'],['p'])
             sage: A
@@ -321,6 +280,7 @@ class Automaton:
 
         Here is a first test::
 
+            sage: from pysemigroup import Automaton
             sage: d={('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}
             sage: A= Automaton(d,['p'],['p'])
             sage: A + A
@@ -374,6 +334,7 @@ class Automaton:
         Automaton
 
         EXAMPLES::
+            sage: from pysemigroup import Automaton
             sage: e = {('p', 'a'): ['q'], ('p', 'b'): ['p'], ('q', 'a'): ['q'], ('q', 'b'): ['q']}
             sage: d = {('p', 'a'): ['p'], ('p', 'b'): ['q'], ('q', 'a'): ['q'], ('q', 'b'): ['q']}
             sage: A = Automaton(d, ['p'] ,['p'])
@@ -483,6 +444,7 @@ class Automaton:
         Automaton
 
         EXAMPLES::
+            sage: from pysemigroup import Automaton
             sage: d = { ('p', 'a') : 'q', ('q','b') :'r' }
             sage: A = Automaton(d, ['p'] ,['r'])
             sage: A.is_accepted('ab')
@@ -532,13 +494,12 @@ class Automaton:
         """
         if exponent == _star:
             return self.kleene_star()
-        elif isinstance(exponent, Integer):
-            if exponent == 1:
-                return self
-            else:
-                return self.__pow__(exponent-1)*self
+        elif exponent == 1:
+            return self
+        elif exponent <= 0:
+            raise ValueError("Exponent must be strictly positive")
         else:
-            raise TypeError("exponent(=%s) must be x or an integer" % exponent)
+            return self.__pow__(exponent-1)*self
 
     def is_accepted(self, u):
         r"""
@@ -553,6 +514,7 @@ class Automaton:
         boolean
 
         EXAMPLES::
+            sage: from pysemigroup import Automaton
             sage: d = {('p', 'a'): ['p'], ('p', 'b'): ['p', 'q']}
             sage: A = Automaton(d,['p'],['q'])
             sage: A.is_accepted('bab')
@@ -582,6 +544,7 @@ class Automaton:
         boolean
 
         EXAMPLES:
+            sage: from pysemigroup import Automaton
             sage: d={('q', 'b'): 'q', ('p', 'a'): 'q', ('q', 'a'): 'p', ('p', 'b'): 'p'}
             sage: A= Automaton(d,['p'],['q'])
             sage: A.is_deterministic()
@@ -602,6 +565,7 @@ class Automaton:
 
         EXAMPLES:
 
+            sage: from pysemigroup import Automaton
             sage: d={('q', 'b'): 'q', ('q', 'a'): 'p', ('p', 'b'): 'p'}
             sage: A = Automaton(d,['p'],['q'])
             sage: A.reverse_transitions()
@@ -633,6 +597,7 @@ class Automaton:
 
         EXAMPLES:
 
+            sage: from pysemigroup import Automaton
             sage: d={('q', 'b'): 'q', ('q', 'a'): 'p', ('p', 'b'): 'p'}
             sage: A = Automaton(d,['p'],['q'])
             sage: A.trim_automata()
@@ -671,6 +636,7 @@ class Automaton:
 
         EXAMPLES:
 
+            sage: from pysemigroup import Automaton
             sage: d = {('p', 'a'): 'p', ('p', 'b'): ['q', 'p'], (frozenset(['a']), 'a'): 'b'}
             sage: A = Automaton(d,['p'],['q'])
             sage: sorted(A._states) 
@@ -709,6 +675,7 @@ class Automaton:
 
         EXAMPLES::
         
+            sage: from pysemigroup import Automaton
             sage: d = {('p', 'a'): ['p'], ('p', 'b'): ['p', 'q']}
             sage: A = Automaton(d, ['p'], ['q'])
             sage: A.is_finite_state_reachable()
@@ -745,6 +712,7 @@ class Automaton:
 
         EXAMPLES::
 
+            sage: from pysemigroup import Automaton
             sage: d = {('p', 'a'): ['p'], ('p', 'b'): ['p', 'q']}
             sage: A = Automaton(d, ['p'], ['q'])
             sage: A
@@ -809,6 +777,7 @@ class Automaton:
 
         EXAMPLES::
         
+            sage: from pysemigroup import Automaton
             sage: d = {('p', 'a'): ['p'], ('p', 'b'): ['p', 'q']}
             sage: A = Automaton(d, ['p'],['q'])
             
@@ -926,6 +895,7 @@ class Automaton:
         Return the application from the set of states to set of states induced by the word u
 
         EXAMPLES::
+            sage: from pysemigroup import Automaton
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: B = Automaton(d,[0],[1])
             sage: B.is_equivalent("aa","aaa")
@@ -967,6 +937,7 @@ class Automaton:
 
         EXAMPLES::
         
+            sage: from pysemigroup import Automaton
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: B = Automaton(d,[0],[1])
             sage: B.is_equivalent("aa","aaa")
@@ -986,12 +957,11 @@ class Automaton:
                 if ((i in d_u) and not (i in d_v)) or ((i in d_v) and not (i in d_u)):
                     return False
         return True
-    def graphviz_string(self, latex= True): 
+    def graphviz_string(self): 
         r"""
-        Return graphviz representation of self. Set latex to True if you want to obtain a nice automaton with dot2tex.
+        Return graphviz representation of self. 
         INPUT :
         -  ``self`` -  Automaton
-        -  ``latex`` -  boolean
 
          OUTPUT:
 
@@ -999,6 +969,7 @@ class Automaton:
 
         EXAMPLES::
         
+            sage: from pysemigroup import Automaton
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: B = Automaton(d,[0],[1])
             sage: B.graphviz_string()
@@ -1006,34 +977,19 @@ class Automaton:
                 
         """
 
-        if latex:
-            ln = 4
-            s = 'digraph {\n ranksep=0.5;\n d2tdocpreamble = "\usetikzlibrary{automata}";\n d2tfigpreamble = "\\tikzstyle{every state}= [ draw=blue!50,very thick,fill=blue!20]  \\tikzstyle{auto}= [fill=white]";\n node [style="state"];\n edge [lblstyle="auto",topath="bend right", len='+str(ln)+'  ]\n'
-        else:
-            s = 'digraph {\n node [margin=0 shape=circle style=filled]\n edge [len =2]\n' 
+        s = 'digraph {\n node [margin=0 shape=circle style=filled]\n edge [len =2]\n' 
         for x in self._states:
-            if latex:
-                s = s+'  "'+str(x)+'" [label="'+str(x)+'",'
-                if x in self._initial_states:
-                    if x in self._final_states:
-                        s = s+'style = "state, initial, accepting"'
-                    else:
-                        s = s+'style = "state, initial"'
+            s = s+'  "'+str(x)+'" [label="'+str(x)+'" '
+            if x in self._initial_states:
+                if x in self._final_states:
+                    s = s+'shape = doublecircle fillcolor = "#aaff80" '
                 else:
-                    if x in self._final_states:
-                        s = s+'style = "state, accepting"'
+                    s = s+'fillcolor = "#aaff80"'
             else:
-                s = s+'  "'+str(x)+'" [label="'+str(x)+'" '
-                if x in self._initial_states:
-                    if x in self._final_states:
-                        s = s+'shape = doublecircle fillcolor = "#aaff80" '
-                    else:
-                        s = s+'fillcolor = "#aaff80"'
+                if x in self._final_states:
+                    s = s+'shape = doublecircle fillcolor = lightblue '
                 else:
-                    if x in self._final_states:
-                        s = s+'shape = doublecircle fillcolor = lightblue '
-                    else:
-                        s = s+' fillcolor = lightblue'
+                    s = s+' fillcolor = lightblue'
                     
                    
             s = s+"];\n"
@@ -1054,15 +1010,14 @@ class Automaton:
         s = s+'}'
         return s
     
-    def to_dot(self, file_name, latex= True):
+    def to_dot(self, file_name):
         r"""
-        Save to filename a dot file representing the automata. Set latex to True to obtain a nice automaton with dot2tex.
+        Save to filename a dot file representing the automata. 
         INPUT :
         -  ``self`` -  Automaton
         -  ``file_name`` -  string        
-        -  ``latex`` -  boolean
         """
-        s = self.graphviz_string(latex= latex)
+        s = self.graphviz_string()
         f = file(file_name+".dot",'w')  
         f.write(s)
         f.close()
@@ -1076,7 +1031,7 @@ class Automaton:
         -  ``prog`` -  string          
         """
 
-        self.to_dot(file_name, latex=False)
+        self.to_dot(file_name)
         if prog in ["dot","circo","neato"]:              
             os.system(prog+' -Tgif  '+file_name+'.dot -o'+file_name+'.gif')
             os.system('rm '+file_name+'.dot')
@@ -1093,7 +1048,7 @@ class Automaton:
         -  ``prog`` -  string          
         """
 
-        self.to_dot(file_name, latex=False)
+        self.to_dot(file_name)
         if prog in ["dot","circo","neato"]:              
             os.system(prog+' -Tsvg  '+file_name+'.dot -o'+file_name+'.svg')
             os.system('rm '+file_name+'.dot')
@@ -1101,31 +1056,5 @@ class Automaton:
             raise ValueError("Unimplemented prog="+prog)
 
             
-    def to_tex(self, file_name, prog="neato"):
-        r"""
-        Save to file_name a latex string representing the automata obtained with prog (dot neato circo).
-        INPUT :
-        -  ``self`` -  Automaton
-        -  ``file_name`` -  string 
-        -  ``prog`` -  string          
-        """
-
-        s = dot2tex.dot2tex(self.graphviz_string(), format='tikz', prog=prog, tikzedgelabels=True,styleonly=True)
-        f = file(file_name+".tex",'w')  
-        f.write(s)
-        f.close()
-
-    def to_pdf(self, file_name, prog="neato"):
-        r"""
-        Save to file_name a pdffile representing the automata obtained with prog (dot neato circo).
-        INPUT :
-        -  ``self`` -  Automaton
-        -  ``file_name`` -  string 
-        """
-
-        self.to_tex(file_name, prog=prog)
-        os.system("pdflatex "+file_name+".tex;rm "+file_name+".tex")    
-        
-
           
         

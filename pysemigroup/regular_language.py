@@ -1,74 +1,20 @@
 #-*- coding:utf-8 -*-
 from sage.rings.integer import Integer
 import re
+from sage.misc.cachefunc import cached_method
+from automata import Automaton
+from transition_semigroup import TransitionSemiGroup
+from sage.calculus.var import var
+from sage.misc.sage_eval import sage_eval
 
-def simplify_regex(regex,A=None):
-        r"""
-        Generate a regular language using a simplify regex syntax. 
-        The alphabet is automatically compute. To use with caution, 
-        since in a lot of cases, it will not produce the desire regular language.
-        INPUT:
-
-        - ``alphabet`` -- list of letters 
-
-        OUTPUT:
-
-            Regular Languages over automatically compute alphabet
-
-        EXAMPLES::
-
-            sage: L = simplify_regex("(abba)*")
-            sage: simplify_regex("(abc)*+(ad)*")
-            Regular language: (a*b*c)^_star+(a*d)^_star over alphabet set(['a', 'c', 'b', 'd'])
-            sage: simplify_regex("(ab)^3+(cd)*")
-            Regular language: (a*b)^3+(c*d)^_star over alphabet set(['a', 'c', 'b', 'd'])
-        
-            sage: simplify_regex("(xx)*+(xd)*")
-            Regular language: (xx)^_star+(x*d)^_star over alphabet set(['d'])
-
-        """
-        if not(A):
-            s = str(regex)
-            s = s.replace("(","")  
-            s = s.replace(")","")        
-            s = s.replace("^","")  
-            s = s.replace("_star","")        
-            s = s.replace("*","")  
-            s = s.replace("+","")
-            s = s.replace("-","")
-            s = s.replace(" ","")
-            s = s.replace("A","")        
-            for x in range(10):
-                while (str(x) in s):           
-                    s = s.replace(str(x),"")
-            A = set(s)
-        alph_str = "("
-        for a in A:
-            alph_str = alph_str + a + "+"
-        alph_str = alph_str[0:len(alph_str)-1] + ")"
-
-        regex = regex.replace("A",alph_str)
-        regex = regex.replace("1","(_empty_word)")  
-        for x in A:
-           for y in A:
-               regex = regex.replace(x+y,x+"."+y)
-        regex = regex.replace("*","^_star")  
-        regex = regex.replace(")(",")*(")
-        regex = regex.replace("_star(","_star*(")
-        for x in A:
-           regex = regex.replace(x+"(",x+"*(")
-           regex = regex.replace(")"+x,")*"+x)
-           regex = regex.replace("_star"+x,"_star*"+x)
-           regex = regex.replace(x+x,x+"*"+x)
-        regex = regex.replace(".","*")           
-        return RegularLanguage(regex,letters=A)
 r"""
 %skip
 EXAMPLES::
 
+    sage: from pysemigroup import RegularLanguage
     sage: L = RegularLanguage("((a+b+c)^3)^_star*a*c*((a+c)^4)^_star*a*c*b*a*((a+b+c)^5)^_star",["a","b","c"])
     sage: L
-    Regular language: ((a+b+c)^3)^_star*a*c*((a+c)^4)^_star*a*c*b*a*((a+b+c)^5)^_star over alphabet ['a', 'b', 'c']
+    Regular language: ((a+b+c)^3)*ac((a+c)^4)*acba((a+b+c)^5)* over alphabet set(['a', 'c', 'b'])
     sage: A = L.automaton()
     sage: A
     Automaton of 76 states
@@ -91,8 +37,8 @@ EXAMPLES::
     True
 
 """
-load automata.sage
-load transition_semigroup.sage
+import automata
+import transition_semigroup
 import itertools
 class RegularLanguages(object):
     r"""
@@ -107,7 +53,7 @@ class RegularLanguages(object):
         Regular Languages class over given alphabet. Each letter become a regularlanguage of itself. The letter 'x' is reserved for the kleene star operation.
 
     EXAMPLES::
-
+        sage: from pysemigroup import RegularLanguages
         sage: RegularLanguages(('a','b'))
         Regular languages over alphabet ('a', 'b')
 
@@ -129,7 +75,7 @@ class RegularLanguages(object):
     def __repr__(self):
         r"""
         EXAMPLES::
-
+            sage: from pysemigroup import RegularLanguages
             sage: RegularLanguages(('a','b','c'))
             Regular languages over alphabet ('a', 'b', 'c')
         """
@@ -173,6 +119,7 @@ class RegularLanguages(object):
 
         The list (with redondancies)::
 
+            sage: from pysemigroup import RegularLanguages
             sage: R = RegularLanguages(('a','b'))
             sage: L = R.list_by_depth(3)
             sage: len(L)
@@ -182,13 +129,13 @@ class RegularLanguages(object):
 
             sage: L = R.list_by_depth(3, unique=True)
             sage: len(L)
-            44
+            48
 
         ::
 
             sage: R = RegularLanguages(("a"))
             sage: R.list_by_depth(1)
-            [Regular language: a over alphabet a]
+            [Regular language: a over alphabet set(['a'])]
             sage: len(R.list_by_depth(2))
             4
 
@@ -293,7 +240,7 @@ class RegularLanguage:
         INPUT:
 
         - ``regex`` - string different from the empty word
-        - ``alphabet`` - Set of atomic letters
+        - ``alphabet`` - set of atomic letters
         """
         self._regex = regex
         if letters is None:
@@ -308,11 +255,73 @@ class RegularLanguage:
             for x in range(10):
                 s = s.replace(str(x),"")
 
-            letters = Set()
+            letters = set()
             for x in s:
                 letters.add(x)
-        self._letters = Set(letters)
+        self._letters = set(letters)
 
+    @classmethod
+    def from_easy_regex(cls, regex,A=None):
+            r"""
+            Generate a regular language using a simplify regex syntax. 
+            The alphabet is automatically compute. To use with caution, 
+            since in a lot of cases, it will not produce the desire regular language.
+            INPUT:
+
+            - ``alphabet`` -- list of letters 
+
+            OUTPUT:
+
+                Regular Languages over automatically compute alphabet
+
+            EXAMPLES::
+
+                sage: from pysemigroup import RegularLanguage
+                sage: L = RegularLanguage.from_easy_regex("(abba)*")
+                sage: RegularLanguage.from_easy_regex("(abc)*+(ad)*")
+                Regular language: (abc)*+(ad)* over alphabet set(['a', 'c', 'b', 'd'])
+                sage: RegularLanguage.from_easy_regex("(ab)^3+(cd)*")
+                Regular language: (ab)^3+(cd)* over alphabet set(['a', 'c', 'b', 'd'])
+            
+                sage: RegularLanguage.from_easy_regex("(xx)*+(xd)*")
+                Regular language: (xx)*+(xd)* over alphabet set(['x', 'd'])
+
+            """
+            if not(A):
+                s = str(regex)
+                s = s.replace("(","")  
+                s = s.replace(")","")        
+                s = s.replace("^","")  
+                s = s.replace("_star","")        
+                s = s.replace("*","")  
+                s = s.replace("+","")
+                s = s.replace("-","")
+                s = s.replace(" ","")
+                s = s.replace("A","")        
+                for x in range(10):
+                    while (str(x) in s):           
+                        s = s.replace(str(x),"")
+                A = set(s)
+            alph_str = "("
+            for a in A:
+                alph_str = alph_str + a + "+"
+            alph_str = alph_str[0:len(alph_str)-1] + ")"
+
+            regex = regex.replace("A",alph_str)
+            regex = regex.replace("1","(_empty_word)")  
+            for x in A:
+               for y in A:
+                   regex = regex.replace(x+y,x+"."+y)
+            regex = regex.replace("*","^_star")  
+            regex = regex.replace(")(",")*(")
+            regex = regex.replace("_star(","_star*(")
+            for x in A:
+               regex = regex.replace(x+"(",x+"*(")
+               regex = regex.replace(")"+x,")*"+x)
+               regex = regex.replace("_star"+x,"_star*"+x)
+               regex = regex.replace(x+x,x+"*"+x)
+            regex = regex.replace(".","*")           
+            return RegularLanguage(regex,letters=A)
     @cached_method
     def letters(self):
         r"""
@@ -326,8 +335,10 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: RegularLanguage("a*b", ['a', 'b'])
-            Regular language: a*b over alphabet ['a', 'b']
+            Regular language: ab over alphabet set(['a', 'b'])
+
         """
         s = self._regex
         s = s.replace("*","")
@@ -345,6 +356,7 @@ class RegularLanguage:
         
         EXAMPLES::
         
+            sage: from pysemigroup import RegularLanguage
             sage: L = RegularLanguage("(a*b)^_star",["a","b"])
             sage: it = iter(L)
             sage: for _ in range(6): next(it)
@@ -359,7 +371,7 @@ class RegularLanguage:
         for n in itertools.count():
             for p in itertools.product(*(letters,)*n):
                 if p in self:
-                    yield join(p).replace(" ","")
+                    yield ''.join(p).replace(" ","")
         
     def __contains__(self, word):
         r"""
@@ -367,6 +379,7 @@ class RegularLanguage:
         
         EXAMPLES::
         
+            sage: from pysemigroup import RegularLanguage
             sage: L = RegularLanguage("(a*b)^_star",["a","b"])
             sage: "ababababab" in L
             True
@@ -397,6 +410,8 @@ class RegularLanguage:
 
         EXAMPLES::
 
+
+            sage: from pysemigroup import RegularLanguage
             sage: R = RegularLanguage("a*b", ['a', 'b'])
             sage: S = RegularLanguage("b*a*a", ['a', 'b'])
             sage: R == S
@@ -432,6 +447,7 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: R = RegularLanguage("a*b", ['a', 'b'])
             sage: R.is_empty()
             False
@@ -459,10 +475,11 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: R = RegularLanguage("a*b", ['a', 'b'])
             sage: S = RegularLanguage("b*a*a", ['a', 'b'])
             sage: R * S
-            Regular language: (a*b*b*a*a) over alphabet set(['a', 'b'])
+            Regular language: (abbaa) over alphabet set(['a', 'b'])
 
         """
         regex = "(%s*%s)" % (self._regex, other._regex)
@@ -484,10 +501,11 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: R = RegularLanguage("a*b", ['a', 'b'])
             sage: S = RegularLanguage("b*a*a", ['a', 'b'])
             sage: R + S
-            Regular language: (a*b+b*a*a) over alphabet set(['a', 'b'])
+            Regular language: (ab+baa) over alphabet set(['a', 'b'])
 
         """
         regex = "(%s+%s)" % (self._regex, other._regex)
@@ -504,10 +522,11 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: L = RegularLanguage("(a*b)^_star", ['a', 'b']) 
             sage: R = RegularLanguage("a*b", ['a', 'b'])     
             sage: L-R
-            Regular language: (((a*b)^_star)-(a*b)) over alphabet set(['a', 'b'])
+            Regular language: (((ab)*)-(ab)) over alphabet set(['a', 'b'])
 
         """
         regex = "((%s)-(%s))" % (self._regex, other._regex)
@@ -524,9 +543,10 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: L = RegularLanguage("(a*b)^_star", ['a', 'b'])
             sage: -L
-            Regular language: -(a*b)^_star over alphabet set(['a', 'b'])
+            Regular language: -(ab)* over alphabet set(['a', 'b'])
 
         
 
@@ -549,10 +569,12 @@ class RegularLanguage:
         RegularLanguage
 
         EXAMPLES::
+
+            sage: from pysemigroup import RegularLanguage
             sage: L = RegularLanguage("(a*b)^_star", ['a', 'b']) 
             sage: R = RegularLanguage("a*b", ['a', 'b'])     
             sage: L.intersection(R)
-            Regular language: ((a*b)^_star-(-a*b)) over alphabet set(['a', 'b'])
+            Regular language: (((ab)*)-(-(ab))) over alphabet set(['a', 'b'])
             
 
         """
@@ -570,9 +592,10 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: R = RegularLanguage("a*b", ['a', 'b'])
             sage: R.kleene_star()
-            Regular language: (a*b)^_star over alphabet set(['a', 'b'])
+            Regular language: (ab)* over alphabet set(['a', 'b'])
 
         """
         regex = "(%s)^_star" % self._regex
@@ -593,11 +616,12 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage,_star
             sage: R = RegularLanguage("a*b", ['a', 'b'])
             sage: R^_star
-            Regular language: (a*b)^_star over alphabet set(['a', 'b'])
+            Regular language: (ab)* over alphabet set(['a', 'b'])
             sage: R^3
-            Regular language: (a*b)^3 over alphabet set(['a', 'b'])
+            Regular language: (ab)^3 over alphabet set(['a', 'b'])
 
         """
         regex = "(%s)^%s" % (self._regex, exponent)
@@ -615,6 +639,7 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: RegularLanguage("a*a",["a"]).automaton()
             Automaton of 4 states
             sage: RegularLanguage("a^_star",["a"]).automaton()
@@ -650,6 +675,7 @@ class RegularLanguage:
 
         EXAMPLES::
 
+            sage: from pysemigroup import RegularLanguage
             sage: RegularLanguage("a*a",["a"]).automaton_deterministic()
             Automaton of 4 states
             sage: RegularLanguage("a^_star",["a"]).automaton_deterministic()
@@ -679,7 +705,8 @@ class RegularLanguage:
         automaton
 
         EXAMPLES::
-
+        
+            sage: from pysemigroup import RegularLanguage
             sage: RegularLanguage("a*a",["a"]).automaton_minimal_deterministic()
             Automaton of 4 states
             sage: RegularLanguage("a*b",["a","b"]).automaton_minimal_deterministic()
@@ -719,31 +746,5 @@ class RegularLanguage:
             return self.syntactic_monoid().is_equation_satisfied(eq,variables,verbose=verbose)
         else:                                        
             return self.syntactic_semigroup().is_equation_satisfied(eq,variables,verbose=verbose)
-    def Variety_test(self,Variety= None):
-        r"""
-        EXAMPLES:
-
-            sage: L = RegularLanguage("(a*b)^_star",['a','b'])
-            sage: L.Variety_test()
-            Language in A
-            Language not in J
-            Language not in COM
-            Language not in G
-            Language not in DA
-           
-        """
-        V = {"A": ["(x)^wx=(x)^w",["x"]],"DA":["(xy)^wx(xy)^w=(xy)^w",["x","y"]],"G": ["(x)^w=1",["x"]], "COM":["xy=yx",["x","y"]],"J":["(xy)^w(yx)^w(xy)^w= (xy)^w",["x","y"]]}
-        if (Variety):
-            if (Variety in V):
-                if (self.is_equation_satisfied(V[Variety][0],V[Variety][1])):
-                    print "Language in "+i
-                else:
-                    print "Language not in "+i
-            else:
-                raise TypeError(Variety+" is not implemented")
-        for i in V:
-            if (self.is_equation_satisfied(V[i][0],V[i][1])):
-                print "Language in "+i
-            else:
-                print "Language not in "+i
+    
                    

@@ -1,0 +1,18 @@
+
+
+{(0, 'a'): [3], (3, 'b'): [0], (3, 'a'): [1], (2, 'a'): [0], (1, 'b'): [2], (2, 'b'): [3], (4, 'b'): [3], (0, 'b'): [1], (1, 'a'): [2], (4, 'a'): [0]}
+Size of monoid :25
+start computing pairs ...
+	 Actual level: 0...
+		Remaning to compute:25 		Remaning to compute:576 Done
+	 Actual level: 1...
+		Remaning to compute:25 		Remaning to compute:552 Done
+	 Actual level: 2...
+		Remaning to compute:25 		Remaning to compute:552 Done
+Done
+Pairs:
+	test level 1
+		50% ... 		100% ... 	Done nb of conlit:0
+	test level 2
+		50% ... 		100% ... 	Done nb of conlit:0
+Done

@@ -1,0 +1,15 @@
+
+
+{(0, 'a'): [3], (3, 'b'): [4], (3, 'a'): [4], (2, 'a'): [2], (1, 'b'): [0], (2, 'b'): [0], (4, 'b'): [2], (0, 'b'): [2], (1, 'a'): [3], (4, 'a'): [0]}
+Size of monoid :188
+start computing pairs ...
+	 Actual level: 0...
+		Remaning to compute:188 		Remaning to compute:6355 		Remaning to compute:3804 		Remaning to compute:9198 		Remaning to compute:5796 		Remaning to compute:3990 		Remaning to compute:2346 		Remaning to compute:1236 		Remaning to compute:1110 		Remaning to compute:534 		Remaning to compute:48 Done
+	 Actual level: 1...
+		Remaning to compute:188 		Remaning to compute:3276 		Remaning to compute:5268 		Remaning to compute:5016 		Remaning to compute:4194 		Remaning to compute:2760 		Remaning to compute:1116 		Remaning to compute:564 		Remaning to compute:612 		Remaning to compute:288 Done
+	 Actual level: 2...
+		Remaning to compute:188 		Remaning to compute:3276 		Remaning to compute:5268 		Remaning to compute:5016 		Remaning to compute:4194 		Remaning to compute:2760 		Remaning to compute:1116 		Remaning to compute:564 		Remaning to compute:612 		Remaning to compute:288 Done
+Done
+Pairs:
+	test level 1
+		2% ... 		4% ... 		6% ... 		8% ... 		11% ... 		13% ... 		15% ... 		17% ... 		20% ... 		22% ... 		24% ... 		26% ... 		28% ...

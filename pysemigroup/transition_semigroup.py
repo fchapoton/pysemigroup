@@ -1,9 +1,7 @@
 from automata import Automaton
 from sage.graphs.digraph import DiGraph
 import os
-from sage.misc.latex import latex
 from sage.sets.finite_set_maps import FiniteSetMaps
-import dot2tex
 from sage.misc.cachefunc import cached_method
 
 class monoidElement(tuple):
@@ -225,21 +223,6 @@ class TransitionSemiGroup(object):
                     graph_viz = graph_viz+'"'+rx+'"->"'+ry+'";\n'
         return graph_viz + '}'    
 
-    def _latex_(self):
-        r"""
-        Return a Tikz  representation of the eggbox diagramm of self. Carefull, a bug in dot2tex prevent to use it directly in sage (utilisation of os.system instead). It should be improved. Also, always use the same temporay file. Could be an (easily fixed) issue. Bug: do compile in command line with pdflatex but not with the view command.
-        EXAMPLE::
- 
-
-        """
-        
-        f = file(".tmp_sg.dot",'w')
-        f.write(self.graphviz_string())
-        f.close()
-        os.system("dot2tex --figonly .tmp_sg.dot > .tmp_sg.tex;rm .tmp_sg.dot")
-        f = file(".tmp_sg.tex",'r')
-        s1 = f.read()
-        return s1
 
     def __call__(self,word):
         r"""
@@ -292,14 +275,6 @@ class TransitionSemiGroup(object):
         for x in self.elements():
             yield x
             
-    def latex_cayley_graph(self,orientation="left_right", prog="dot",tikzedgelabels=False):
-        r"""
-        latex representation obtained with dot -> dot2tex.
-        """
-        latex.extra_preamble("")
-        latex.add_to_preamble("\\usepackage{tikz}\n\\usetikzlibrary{automata}")
-        s = dot2tex.dot2tex(self.cayley_graphviz_string(orientation=orientation), format='tikz',figonly=True, prog=prog, crop=True, tikzedgelabels=tikzedgelabels,styleonly=True)
-        return s
         
     
     @cached_method
@@ -460,12 +435,11 @@ class TransitionSemiGroup(object):
         else:
             return u
     @cached_method
-    def cayley_graph(self, dot=False, loop= True, label=True, orientation="right"):
+    def cayley_graph(self, loop= True, label=True, orientation="right"):
         r"""
         Return the Cayley graph of the semigroup
         INPUT :
         
-        - ``dot``  -- boolean -- if True, return a Digraph that can be plot using dot2tex
         - ``idempotent``  -- boolean -- if True, return a Digraph with idempotent mark with a star
         - ``orientation``  -- string --  value "left", "left_right", "right". 
         
@@ -503,10 +477,6 @@ class TransitionSemiGroup(object):
 
 
         G = DiGraph(d)  
-        if dot:        
-            G.set_latex_options(format='dot2tex', prog='dot',edge_labels=True)
-        else:
-            G.set_latex_options(edge_labels=True)
         if not loop:
             G.allow_loops(False)
         if not label:
@@ -920,7 +890,7 @@ class TransitionSemiGroup(object):
         file_dot = tmp_filename(".",".dot")
         file_gif = tmp_filename(".",".gif")
         f = file(file_dot,'w')
-        f.write(self.cayley_graphviz_string(edge_label=edge_label,orientation=orientation,latex=False))
+        f.write(self.cayley_graphviz_string(edge_label=edge_label,orientation=orientation))
         f.close()
         os.system('dot -Tgif %s -o %s; %s %s  2>/dev/null 1>/dev/null '%(file_dot,file_gif,browser(),file_gif))
         

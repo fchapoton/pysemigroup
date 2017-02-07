@@ -1,0 +1,19 @@
+['a', '', 'aa', 'b', 'ba', 'aba', 'abaa', 'baa', 'ab']
+a.a->aa;
+a.b->ab;
+.a->a;
+.b->b;
+aa.a->a;
+aa.b->b;
+b.a->ba;
+b.b->ab;
+ba.a->baa;
+ba.b->b;
+aba.a->abaa;
+aba.b->ab;
+abaa.a->aba;
+abaa.b->b;
+baa.a->ba;
+baa.b->ab;
+ab.a->aba;
+ab.b->b;
