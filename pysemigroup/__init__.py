@@ -1,5 +1,4 @@
 from automata import Automaton
 from transition_semigroup import TransitionSemiGroup
 from regular_language import RegularLanguage
-from regular_language import RegularLanguages
 from automata import _star
