@@ -875,24 +875,24 @@ class TransitionSemiGroup(object):
     
     def view(self, arrow=True,verbose=False,unfold=True,new=True):
         from sage.misc.temporary_file import tmp_filename 
-        from sage.misc.viewer import browser
+        from sage.misc.viewer import viewer
         file_dot = tmp_filename(".",".dot")
         file_gif = tmp_filename(".",".gif")
         f = file(file_dot,'w')
         f.write(self.graphviz_string(arrow=arrow,verbose=verbose,unfold=unfold,new=new))
         f.close()
-        os.system('dot -Tgif %s -o %s; %s %s  2>/dev/null 1>/dev/null '%(file_dot,file_gif,browser(),file_gif))
+        os.system('dot -Tgif %s -o %s; %s %s  2>/dev/null 1>/dev/null & '%(file_dot,file_gif,viewer(),file_gif))
 
     def view_cayley(self,orientation="left_right",edge_label=True):
         from sage.misc.temporary_file import tmp_filename 
-        from sage.misc.viewer import browser
+        from sage.misc.viewer import viewer
 
         file_dot = tmp_filename(".",".dot")
         file_gif = tmp_filename(".",".gif")
         f = file(file_dot,'w')
         f.write(self.cayley_graphviz_string(edge_label=edge_label,orientation=orientation))
         f.close()
-        os.system('dot -Tgif %s -o %s; %s %s  2>/dev/null 1>/dev/null '%(file_dot,file_gif,browser(),file_gif))
+        os.system('dot -Tgif %s -o %s; %s %s  2>/dev/null 1>/dev/null &'%(file_dot,file_gif,viewer(),file_gif))
         
     def is_Ap(self,verbose=False):
         for e in self.idempotents():
@@ -951,5 +951,5 @@ class TransitionSemiGroup(object):
         f = file(s+".dot",'w')
         f.write(self.graphviz_string())
         f.close()
-        os.system('dot -Tgif %s -o %s; rm %s  2>/dev/null 1>/dev/null '%(s+".dot",s+".gif",s+".dot"))
+        os.system('dot -Tgif %s -o %s; rm %s  2>/dev/null 1>/dev/null &'%(s+".dot",s+".gif",s+".dot"))
 

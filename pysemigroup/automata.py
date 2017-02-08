@@ -233,16 +233,14 @@ class Automaton:
         if prog not in ["neato","dot","circo"]:
             raise ValueError("prog should be 'neato', 'dot' or 'circo'")
         from sage.misc.temporary_file import tmp_filename 
-        from sage.misc.viewer import browser
+        from sage.misc.viewer import viewer 
         if file_type == "gif":
             file_dot = tmp_filename(".",".dot")
             file_gif = tmp_filename(".",".gif")
             f = file(file_dot,'w')
             f.write(self.graphviz_string())
             f.close()
-        os.system('%s -Tgif %s -o %s; %s %s'%(prog,file_dot,file_gif,browser(),file_gif))
-        
-
+        os.system('%s -Tgif %s -o %s; %s %s&'%(prog,file_dot,file_gif,viewer(),file_gif))
             
 
     def __repr__(self):

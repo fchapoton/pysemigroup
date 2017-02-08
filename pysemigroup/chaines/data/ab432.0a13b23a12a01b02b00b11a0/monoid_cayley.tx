@@ -1,9 +1,0 @@
-['a', '', 'aa', 'b']
-a.a->aa;
-a.b->aa;
-.a->a;
-.b->b;
-aa.a->a;
-aa.b->a;
-b.a->aa;
-b.b->aa;
