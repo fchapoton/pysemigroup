@@ -291,7 +291,7 @@ class RegularLanguage:
         """
         regex = "(%s*%s)" % (self._regex, other._regex)
         letters = self.letters() | other.letters()
-        return RegularLanguage(regex, letters)
+        return RegularLanguage(regex, letters=letters)
 
     def __add__(self, other):
         r"""
@@ -317,7 +317,7 @@ class RegularLanguage:
         """
         regex = "(%s+%s)" % (self._regex, other._regex)
         letters = self.letters() | other.letters()
-        return RegularLanguage(regex, letters)
+        return RegularLanguage(regex, letters=letters)
     
     def __sub__(self, other):
         r"""
