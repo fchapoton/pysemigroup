@@ -5,6 +5,8 @@ from copy import copy
 from sage.graphs.digraph import DiGraph
 from sage.calculus.var import var
 import os
+from sage.sets.finite_set_maps import FiniteSetMaps
+from ring import *
 _star = var("_star")
 
 def CartesianProduct_aut(A,B):
@@ -36,8 +38,8 @@ def random_automaton(size, alphabet):
     return Automaton(transition,sample(states,1),sample(states,1),states,alphabet)
     
     
-class Automaton:
-    def __init__(self, transitions, initial_states, final_states, states=None, alphabet=None):
+class Automaton(object):
+    def __init__(self, transitions, initial_states, final_states, states=None, alphabet=None, aut_type="boolean"):
         r"""
         INPUT:
 
@@ -46,7 +48,7 @@ class Automaton:
         - ``final_states`` - list of states
         - ``states`` - set of states
         - ``alphabet`` - set of letters
-
+        - ``aut_type`` - type of automaton (boolean or buchi for now).
         OUTPUT:
 
         automata
@@ -57,7 +59,7 @@ class Automaton:
             sage: d={('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}
             sage: A= Automaton(d,['p'],['p'])
         """
-        
+
         self._transitions = dict(transitions)
 
         if alphabet:
@@ -79,7 +81,7 @@ class Automaton:
         self._initial_states = list(initial_states)
         self._final_states = list(final_states)
         self._is_semigroup_computed = False
-
+        self._type = aut_type
     @classmethod
     def from_letter(Automaton, letter,alphabet=None):
         r"""
@@ -255,8 +257,7 @@ class Automaton:
             sage: A
             Automaton of 2 states
         """
-        s = "Automaton of %s states" %len(self._states)
-
+        s = "%s automaton of %s states" %(self._type,len(self._states))
         return s
     def __pos__(self):
         return self
@@ -1045,14 +1046,62 @@ class Automaton:
         -  ``file_name`` -  string 
         -  ``prog`` -  string          
         """
-
+ 
         self.to_dot(file_name)
         if prog in ["dot","circo","neato"]:              
             os.system(prog+' -Tsvg  '+file_name+'.dot -o'+file_name+'.svg')
             os.system('rm '+file_name+'.dot')
         else:
             raise ValueError("Unimplemented prog="+prog)
+    def identity_on_automata_ring(self):
+        r"""
+        """
+        d = {}
+        if self._type == "boolean":
+            F =  FiniteSetMaps(self._states)        
+            for y in self._states:
+                d[y] = y
+            return F.from_dict(d)
+        if self._type == "buchi":
+            for x in range(len(self._states)):
+                for y in range(len(self._states)):
+                    if x == y:
+                        d[(x,y)]=1
+                    else:
+                        d[(x,y)]=0
+            return RingMatrix((len(self._states),len(self._states)),d)        
+        raise ValueError("Automaton type"+self._type+" is unsupported yet")
 
-            
-          
-        
+    def letter_to_algebra(self,letter):
+        r"""
+        return a matrix or a function representing letter action on state.
+        The return type depend on the choosed of aut_type in init. Only work
+        for boolean and buchi type.
+        INPUT :
+        -  ``self`` -  Automaton
+        -  ``letter`` -  string 
+        OUTPUT :
+        - an object representing matrix on adequate ring
+        """        
+        if self._type == "boolean":
+            F =  FiniteSetMaps(self._states)        
+            d = {}
+            for y in self._states:
+                d[y] = self._transitions[(y,letter)][0]                    
+            return  F.from_dict(d)
+        if self._type == "buchi":
+            d = {}
+            states = self._states       
+            for y in states:
+                for z in states:
+                    if (z in self._transitions[(y,letter)]):
+                        if (z in self._final_states):
+                            d[(y,z)] = buchiRing(1)
+                        else:
+                            d[(y,z)] = buchiRing(0)
+                    else:
+                        d[(y,z)] = buchiRing("-oo")
+            fctx = RingMatrix((self._states,self._states),d,buchiRing)            
+            return fctx
+        raise ValueError("Automaton type"+self._type+" is unsupported yet")
+

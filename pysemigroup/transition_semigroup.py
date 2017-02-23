@@ -1,9 +1,10 @@
 from automata import Automaton
 from sage.graphs.digraph import DiGraph
 import os
-from sage.sets.finite_set_maps import FiniteSetMaps
+import sys
 from sage.misc.cachefunc import cached_method
-
+from ring import *
+        
 class monoidElement(tuple):
     def __repr__(self):
         s = ""
@@ -59,8 +60,20 @@ def draw_box(box):
     s = s.replace("'","")
    
     return s+'\\end{tabular}'
-                           
-def draw_box_dot(box,idempotents,colors_list=False,):
+def draw_box_dot(box,idempotents,colors_list=False):
+    s = '"{'
+    for L in box:
+        for H in L:
+            for a in H:
+                if a in idempotents:
+                    s+= "<"+str(a)+">"+str(a)+"*,"
+                else:
+                    s+= str(a)+","
+            s = s[0:len(s)-1]+'|'
+        s = s[0:len(s)-1]+'}|{'
+    return s[0:len(s)-2]+'"'
+
+def draw_box_dot_old(box,idempotents,colors_list=False,):
     s = '<<table border="1" cellborder="1" CELLSPACING="0" cellpadding="4">'
     for L in box:
         #uns = u.replace("*","")
@@ -82,7 +95,7 @@ def draw_box_dot(box,idempotents,colors_list=False,):
     s = s + '</table>>' 
     return s                        
 
-class TransitionSemiGroup(object):
+class TransitionSemiGroup:
     r"""
     Return the transition semigroup of a deterministic automaton.
 
@@ -122,10 +135,8 @@ class TransitionSemiGroup(object):
         self._monoid = monoid
         self._compute = compute
         self._generators = [monoidElement(x) for x in automaton._alphabet]      
-        d = {}
-        for x in automaton._transitions:
-            d[(x[0],monoidElement(x[1]))] = automaton._transitions[x]                   
-        self._automaton = Automaton(d,automaton._initial_states,automaton._final_states)         
+        d = dict(automaton._transitions)
+        self._automaton = Automaton(d,automaton._initial_states,automaton._final_states,aut_type=automaton._type)         
         if compute:
             l = self.elements(max_size=max_size)            
     def __repr__(self):
@@ -141,8 +152,7 @@ class TransitionSemiGroup(object):
         """
         return "Transition SemiGroup of %s" % self._automaton
 
-    @cached_method
-    def graphviz_string(self, arrow=True,verbose=False,unfold=True,colors_list=False,new=True):
+    def graphviz_string(self, arrow=True,verbose=False,unfold=True,colors_list=False,get_repr=False):
         r"""  
         Return graphviz eggbox representation of self. Set arrow to False to delete the arrow.
         INPUT :
@@ -177,7 +187,7 @@ class TransitionSemiGroup(object):
         if verbose:
             edge_nb = str(len(Gcal.edges()))
             print "computing global structure ..."
-            count = 0 
+        count = 0 
         for x in repre:
             if verbose:
                 count = count+1
@@ -190,9 +200,8 @@ class TransitionSemiGroup(object):
             Gcal.merge_vertices(Lx)
         if verbose:
             print "done."
-
         Edge = []
-        graph_viz = 'digraph {node [shape= none] \n'
+        graph_viz = 'digraph {node [shape= record] \n'
         for x in repre:
             if x == '' or x == ():
                 rx = '"1"'
@@ -221,7 +230,10 @@ class TransitionSemiGroup(object):
                     else:
                         ry = str(y)
                     graph_viz = graph_viz+'"'+rx+'"->"'+ry+'";\n'
-        return graph_viz + '}'    
+        if get_repr:
+            return (graph_viz + '}',repre)
+        else:
+            return graph_viz + '}'
 
 
     def __call__(self,word):
@@ -290,7 +302,6 @@ class TransitionSemiGroup(object):
         INPUT :
         
         -  ``verbose`` - boolean
-
         EXAMPLES::
 
             sage: from pysemigroup import Automaton, TransitionSemiGroup          
@@ -306,13 +317,9 @@ class TransitionSemiGroup(object):
         Sg = []
         Rep = {}
         Rep_rv = {}
-        letter_quot = {}        
-        F =  FiniteSetMaps(Aut._states)
+        letter_quot = {}
         for x in A:
-            d = {}
-            for y in Aut._states:
-                d[y] = Aut._transitions[(y,x)][0]
-            fctx = F.from_dict(d)            
+            fctx = Aut.letter_to_algebra(str(x))
             if fctx not in Sg:
                 Rep[fctx] = x
                 Rep_rv[x] = fctx
@@ -321,19 +328,14 @@ class TransitionSemiGroup(object):
                 letter_quot[x] = fctx
         Gene = list(Sg)
         last = list(Sg)                        
-        
         if self._monoid:
-            d = {}
-            for y in Aut._states:
-                    d[y] = y
-            ident = F.from_dict(d)
-            
+            ident = Aut.identity_on_automata_ring()
             if ident not in Sg:
                 Rep[ident] = monoidElement("")
                 Rep_rv[monoidElement("")] = ident
                 Sg.append(ident)        
         count = 0
-        while len(last)>0:
+        while len(last)>0:            
             old = list(last)
             last = []
             count = count + 1  
@@ -347,7 +349,6 @@ class TransitionSemiGroup(object):
                     if  v_u not in Sg:
                         if verbose:
                             print "new element "+str(Ru+Rv)+"no: "+str(len(Sg))
-                            sys.stdout.write("\033[F")
                         Sg.append(v_u)
                         last.append(v_u)
                         Ruv = Ru+Rv
@@ -496,7 +497,8 @@ class TransitionSemiGroup(object):
                 E = self.J_class_of_element(e)
             else:
                 raise ValueError("Orientation(={}) should be 'left', 'right', or 'left_right'".format(orientation))
-            s = s + 'subgraph cluster'+str(e)+'{style=filled;\ncolor=black;\nfillcolor=azure;\n'        
+            Elements = Elements.difference(E)
+            s = s + 'subgraph cluster'+str(e)+'{style=filled;\ncolor=black;\nfillcolor=azure;\n'
             for x in E:
                 if (x == ""):
                     s = s+'  "'+str(x)+'" [label="'+str(1)+'"'
@@ -879,7 +881,7 @@ class TransitionSemiGroup(object):
         file_dot = tmp_filename(".",".dot")
         file_gif = tmp_filename(".",".gif")
         f = file(file_dot,'w')
-        f.write(self.graphviz_string(arrow=arrow,verbose=verbose,unfold=unfold,new=new))
+        f.write(self.graphviz_string(arrow=arrow,verbose=verbose,unfold=unfold))
         f.close()
         os.system('dot -Tgif %s -o %s; %s %s  2>/dev/null 1>/dev/null & '%(file_dot,file_gif,viewer(),file_gif))
 
@@ -953,3 +955,109 @@ class TransitionSemiGroup(object):
         f.close()
         os.system('dot -Tgif %s -o %s; rm %s  2>/dev/null 1>/dev/null &'%(s+".dot",s+".gif",s+".dot"))
 
+class BuchiTransitionOmegaSG(TransitionSemiGroup):
+    def __init__(self, automaton,compute=False):   
+        TransitionSemiGroup.__init__(self,automaton,monoid=False
+                                     , compute=compute)
+        self._automaton._type = "buchi"
+        self._omega_compute = False
+    @cached_method
+    def omega_elements(self, maxsize= 0, verbose=False):
+        elements = TransitionSemiGroup.elements(self,maxsize=maxsize,verbose=verbose)
+        omega_representation= dict()
+        omega_representation_rev = dict()
+        set_of_omega_raw = set()
+        set_of_omega = set()
+        for x in elements:
+            y =  monoidElement("("+str(x)+")^w")
+            K = self.omega_power_raw(x)
+            omega_representation[y] = K
+            if K not in set_of_omega_raw:
+                omega_representation_rev[K] = y
+                set_of_omega.add(y)
+                set_of_omega_raw.add(K)
+        L = list(set_of_omega)
+        for x in elements:
+            for z in L:                
+                Mat = self._Representations_rev[x]
+                D = omega_representation[z]
+                K = Mat*D
+                if K not in set_of_omega_raw:
+                    omega_representation[x+z] = K
+                    set_of_omega_raw.add(K)
+                    omega_representation_rev[K] = x+z
+                    set_of_omega.add(x+z)
+                    
+        self._omega_representation = omega_representation
+        self._omega_representation_rev = omega_representation_rev
+        self._omega_compute = True
+        return set_of_omega
+    def omega_product(self,x,z):
+        if not self._omega_compute:
+            O = self.omega_elements()
+        Mat = self._Representations_rev[self(x)]
+        D = self._omega_representation[z]
+        K = Mat*D
+        return self._omega_representation_rev[K]
+    def omega_power(self,x):
+        if not self._omega_compute:
+            O = self.omega_elements()
+        O = self.omega_elements()
+        return self._omega_representation_rev[self.omega_power_raw(x)]
+        
+    @cached_method
+    def omega_power_raw(self,x):
+        Mat = self._Representations_rev[self.idempotent_power(x)]
+        D = Mat.diagonal()
+        D.projection({buchiRing(0):buchiRing("-oo")})
+        return Mat*D
+    def left_omega_cayley(self):
+        d = []
+        A = self._generators
+        O = self.omega_elements()
+        for a in A:
+            for x in O:
+              d.append((x,self.omega_product(a,x),a))
+        return d
+
+    def _omega_graphviz_string(self,give_repre=None):
+        d = self.left_omega_cayley()
+        G = DiGraph(d,multiedges=True,loops=True)
+        G.remove_loops()
+        G.remove_multiple_edges()
+        sources = list(G.strongly_connected_components_digraph().sources()[0])
+        J_min = self._get_J_topological_sort()
+        J_min = J_min[len(J_min)-1]
+        J_min = list(set(give_repre).intersection(J_min))[0]
+        s = """
+subgraph clusteromega{
+style=filled;
+color=black;
+fillcolor=azure;\n"""
+        O = self.omega_elements()
+        for x in O:
+            s +='  "'+str(x)+'"[label="'+str(x)+'",shape=rectangle];\n'
+        s += '}\n'
+        for e in d:
+            s += '   "'+str(e[0])+'"->"'+str(e[1])+'"[label="'+str(e[2])+'."];\n'
+        if not give_repre:
+            for e in self.idempotents():
+                s += '   '+str(e)+'->"'+str(self.omega_power(e))+'"[color=darkgreen, weight=10];\n'
+        else:
+            for x in give_repre:
+                I = set(self.idempotents()).intersection(self.J_class_of_element(x))            
+                for e in I:
+                    s += '   '+str(x)+":"+str(e)+'->"'+str(self.omega_power(e))+'"[color=darkgreen, weight=10];\n'
+        for k in sources:
+            s +=  '   '+str(J_min)+' -> "'+str(k)+'"[style=invis];\n'
+        return s
+    def cayley_graphviz_string(self,edge_label=True, orientation="left_right"):
+        s = TransitionSemiGroup.cayley_graphviz_string(self,edge_label=edge_label, orientation=orientation)
+        return s[0:len(s)-1]+self._omega_graphviz_string()+"}" 
+
+    def graphviz_string(self,arrow=True,verbose=False,unfold=True,colors_list=False):
+        x = TransitionSemiGroup.graphviz_string(self,arrow=arrow,verbose=verbose,unfold=unfold,colors_list=colors_list,get_repr=True)
+        repre= x[1]
+        s = x[0]
+        s = s.replace("node","edge[weight=50];\n node")
+        return s[0:len(s)-1]+self._omega_graphviz_string(give_repre=repre)+"}"
