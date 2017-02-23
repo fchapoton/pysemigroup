@@ -318,11 +318,11 @@ class TransitionSemiGroup:
         Rep = {}
         Rep_rv = {}
         letter_quot = {}
-        for x in A:
-            fctx = Aut.letter_to_algebra(str(x))
+        for x in Aut._alphabet:
+            fctx = Aut.letter_to_algebra(x)
             if fctx not in Sg:
-                Rep[fctx] = x
-                Rep_rv[x] = fctx
+                Rep[fctx] = monoidElement(x)
+                Rep_rv[monoidElement(x)] = fctx
                 Sg.append(fctx)                     
             else:
                 letter_quot[x] = fctx
@@ -677,7 +677,7 @@ class TransitionSemiGroup:
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0], (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
-            sage: S.stability_index()
+            sage: stability_index()
             2
         """
 
@@ -717,7 +717,7 @@ class TransitionSemiGroup:
         Return the automata recognizing the language enriched by modular counting
         """
         Aut = self._automaton
-        d_old = Aut.s_transitions
+        d_old = Aut._transitions
         d = {}
         s = self.stability_index()
         A = Aut._alphabet
@@ -954,6 +954,11 @@ class TransitionSemiGroup:
         f.write(self.graphviz_string())
         f.close()
         os.system('dot -Tgif %s -o %s; rm %s  2>/dev/null 1>/dev/null &'%(s+".dot",s+".gif",s+".dot"))
+
+
+
+
+
 
 class BuchiTransitionOmegaSG(TransitionSemiGroup):
     def __init__(self, automaton,compute=False):   
