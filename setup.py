@@ -1,7 +1,7 @@
 from setuptools import setup
-setup(name='semigroup',
-      version='0.2',
-      description='The funniest joke in the world',
+setup(name='pysemigroup',
+      version='0.2b',
+      description='A tool to manipulate transitions semigroups and display them',
       url='http://github.com/charles-paperman/pysemigroup',
       author='Charles Paperman',
       author_email='flyingcircus@example.com',
