@@ -1,17 +1,14 @@
 from collections import defaultdict
-from sage.combinat.cartesian_product import CartesianProduct
 import subprocess   
 from copy import copy
-from sage.graphs.digraph import DiGraph
-from sage.calculus.var import var
 import os
-from sage.sets.finite_set_maps import FiniteSetMaps
-from ring import *
-_star = var("_star")
-
+import numpy as np
+from .ring import *
+from random import sample
+from .utils import view_graphviz
 def CartesianProduct_aut(A,B):
-    alpha1 = CartesianProduct(A._alphabet,B._alphabet).list()
-    states = CartesianProduct(A._states,B._states).list()
+    alpha1 = [(a,b) for a in A._alphabet for b in B._alphabet]
+    states = [(p,q) for p in A._states for q in B._states]
     transitions = {}
     alphabet = []
     for a in alpha1:
@@ -190,7 +187,7 @@ class Automaton(object):
         return Automaton(transitions, initial_states, final_states)
        
         
-    def to_theirs(self):
+    def to_sage_automaton(self):
         r"""
         Return Sage version of this automaton.
 
@@ -225,24 +222,10 @@ class Automaton(object):
                 L.append((stateA,stateB,letter))
         from sage.combinat.finite_state_machine import Automaton as Automaton_theirs
         return Automaton_theirs(L, initial_states=self._initial_states, final_states=self._final_states)
-    def view(self,prog='dot',file_type="gif"):
+    def view(self):
         r"""
-        Fast and efficient way to view self via prog->gif. 
-        More efficient and nicer than view(A). 
-        prog should be "neato", "dot" or "circo"
-        EXAMPLES::
         """
-        if prog not in ["neato","dot","circo"]:
-            raise ValueError("prog should be 'neato', 'dot' or 'circo'")
-        from sage.misc.temporary_file import tmp_filename 
-        from sage.misc.viewer import viewer 
-        if file_type == "gif":
-            file_dot = tmp_filename(".",".dot")
-            file_gif = tmp_filename(".",".gif")
-            f = file(file_dot,'w')
-            f.write(self.graphviz_string())
-            f.close()
-        os.system('%s -Tgif %s -o %s; %s %s&'%(prog,file_dot,file_gif,viewer(),file_gif))
+        view_graphviz(self.graphviz_string())
             
 
     def __repr__(self):
@@ -475,14 +458,16 @@ class Automaton(object):
         for i in set(self._initial_states)|set(self._final_states):
             final_states.append(i)
         return Automaton(transitions, self._initial_states, final_states,alphabet=self._alphabet)
-
+    def __xor__(self,exponent):
+        return self.__pow__(exponent)
+    
     def __pow__(self, exponent):
         r"""
         Return power of self.
 
         INPUT:
 
-        -  ``exponent`` -  integer or variable
+        -  ``exponent`` -  integer or string
 
         OUTPUT:
 
@@ -491,7 +476,7 @@ class Automaton(object):
         EXAMPLES::
 
         """
-        if exponent == _star:
+        if exponent == "_star":
             return self.kleene_star()
         elif exponent == 1:
             return self
@@ -818,7 +803,7 @@ class Automaton(object):
             M = their.minimization(algorithm=algorithm)
             R = Automaton.from_theirs(M)
         else:
-            raise NotImplementedError, "Algorithm '%s' is not implemented. Choose 'Hopcroft' or 'Moore' or 'Brzozowski'" % algorithm   
+            raise NotImplementedError("Algorithm '"+algorithm+"' is not implemented. Choose 'Hopcroft' or 'Moore' or 'Brzozowski'")   
         if rename_states:
             R.rename_states()
         return R  
@@ -905,7 +890,7 @@ class Automaton(object):
             {0: 0, 1: 1}
         """
         if not self.is_deterministic() :
-            print 'The automaton must be deterministic'
+            print('The automaton must be deterministic')
         else:
             d={}
             for i in self._states:
@@ -1058,10 +1043,7 @@ class Automaton(object):
         """
         d = {}
         if self._type == "boolean":
-            F =  FiniteSetMaps(self._states)        
-            for y in self._states:
-                d[y] = y
-            return F.from_dict(d)
+            return hash_matrix(np.identity(len(self._states)))
         if self._type == "buchi":
             for x in range(len(self._states)):
                 for y in range(len(self._states)):
@@ -1074,7 +1056,7 @@ class Automaton(object):
 
     def letter_to_algebra(self,letter):
         r"""
-        return a matrix or a function representing letter action on state.
+        return a matrix representing letter action on state.
         The return type depend on the choosed of aut_type in init. Only work
         for boolean and buchi type.
         INPUT :
@@ -1082,26 +1064,34 @@ class Automaton(object):
         -  ``letter`` -  string 
         OUTPUT :
         - an object representing matrix on adequate ring
-        """        
+        """
         if self._type == "boolean":
-            F =  FiniteSetMaps(self._states)        
-            d = {}
-            for y in self._states:
-                d[y] = self._transitions[(y,letter)][0]                    
-            return  F.from_dict(d)
+            states = list(self._states)
+            n = len(states)
+            L = []
+            for x in range(n):
+                Lx = list()
+                for y in range(n):                    
+                    if ((states[x],letter) in self._transitions)  and ( y in self._transitions[(states[x],letter)]):
+                        Lx.append(1)
+                    else:
+                        Lx.append(0)
+                L.append(Lx)
+            return hash_matrix(L)
         if self._type == "buchi":
             d = {}
             states = self._states       
             for y in states:
                 for z in states:
-                    if (z in self._transitions[(y,letter)]):
+                    d[(y,z)] = "-oo"            
+                    if ((y,letter) in self._transitions) and (z in self._transitions[(y,letter)]):
                         if (z in self._final_states):
-                            d[(y,z)] = buchiRing(1)
+                            d[(y,z)] = 1
                         else:
-                            d[(y,z)] = buchiRing(0)
+                            d[(y,z)] = 0
                     else:
-                        d[(y,z)] = buchiRing("-oo")
-            fctx = RingMatrix((self._states,self._states),d,buchiRing)            
+                        d[(y,z)] = "-oo"
+            fctx = BuchiMatrix((self._states,self._states),d)            
             return fctx
         raise ValueError("Automaton type"+self._type+" is unsupported yet")
 

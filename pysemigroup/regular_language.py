@@ -1,12 +1,8 @@
 #-*- coding:utf-8 -*-
-from sage.rings.integer import Integer
 import re
-from sage.misc.cachefunc import cached_method
-from automata import Automaton
-from transition_semigroup import TransitionSemiGroup
-from sage.calculus.var import var
-from sage.misc.sage_eval import sage_eval
-
+from .automata import Automaton
+from .transition_semigroup import TransitionSemiGroup
+_star = "_star"
 r"""
 %skip
 EXAMPLES::
@@ -37,8 +33,7 @@ EXAMPLES::
     True
 
 """
-import automata
-import transition_semigroup
+from .automata import *
 import itertools                    
     
 class RegularLanguage:    
@@ -119,8 +114,10 @@ class RegularLanguage:
             for x in A:
                for y in A:
                    regex = regex.replace(x+y,x+"."+y)
-            regex = regex.replace("*","^_star")  
-            regex = regex.replace(")(",")*(")
+            regex = regex.replace("*","**_star")  
+
+
+            L_regex = regex.replace(")(",")*(")
             regex = regex.replace("_star(","_star*(")
             for x in A:
                regex = regex.replace(x+"(",x+"*(")
@@ -129,13 +126,11 @@ class RegularLanguage:
                regex = regex.replace(x+x,x+"*"+x)
             regex = regex.replace(".","*")           
             return RegularLanguage(regex,letters=A)
-    @cached_method
     def letters(self):
         r"""
         """
         return set(self._letters)
         
-    @cached_method
     def __repr__(self):
         r"""
         String representation
@@ -149,7 +144,7 @@ class RegularLanguage:
         """
         s = self._regex
         s = s.replace("*","")
-        s = s.replace("^_star","*")
+        s = s.replace("_star","*")
         s = s.replace("1e",'1')
         return "Regular language: %s over alphabet %s" % (s, self._letters)
         
@@ -435,7 +430,6 @@ class RegularLanguage:
         letters = self.letters()
         return RegularLanguage(regex, letters)
 
-    @cached_method
     def automaton(self):
         r"""
         Return an automaton of the regular language.
@@ -463,15 +457,13 @@ class RegularLanguage:
         """
         if self._regex == "":
             return Automaton.from_empty_string(self.letters())        
-        else:    
-            D = {}
+        else:  
             for letter in self.letters():
-                D[letter] = Automaton.from_letter(letter,alphabet=self.letters())
-            D["_empty_word"] = Automaton.from_empty_string(self.letters())
-            D["_star"] = var("_star")
-            return sage_eval(self._regex, D)
+                exec(letter+" = Automaton.from_letter(letter,alphabet=self.letters())")
+            _empty_word = Automaton.from_empty_string(self.letters())
+            _star = "_star"
+            return eval(self._regex)
 
-    @cached_method
     def automaton_deterministic(self):
         r"""
         Return a deterministic automaton of the regular language.
@@ -499,7 +491,6 @@ class RegularLanguage:
         """
         return self.automaton().deterministic_automaton(rename_states=True)
 
-    @cached_method
     def automaton_minimal_deterministic(self, algorithm=None):
         r"""
         Return the minimal deterministic automaton of the regular language.
@@ -530,11 +521,9 @@ class RegularLanguage:
         """
         return self.automaton().minimal_automaton(algorithm=algorithm)
   
-    @cached_method
     def syntactic_semigroup(self):
         return TransitionSemiGroup(self.automaton_minimal_deterministic(),monoid=False)
 
-    @cached_method
     def syntactic_monoid(self):
         return TransitionSemiGroup(self.automaton_minimal_deterministic())
   
