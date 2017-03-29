@@ -5,7 +5,7 @@ import os
 import numpy as np
 from .ring import *
 from random import sample
-from .utils import view_graphviz
+from .utils import save_graphviz,view_graphviz
 def CartesianProduct_aut(A,B):
     alpha1 = [(a,b) for a in A._alphabet for b in B._alphabet]
     states = [(p,q) for p in A._states for q in B._states]
@@ -222,12 +222,14 @@ class Automaton(object):
                 L.append((stateA,stateB,letter))
         from sage.combinat.finite_state_machine import Automaton as Automaton_theirs
         return Automaton_theirs(L, initial_states=self._initial_states, final_states=self._final_states)
-    def view(self):
+    def view(self,save_to_file=None,extension="svg"):
         r"""
         """
-        view_graphviz(self.graphviz_string())
-            
-
+        view_graphviz(self.graphviz_string(),save_to_file=save_to_file,extension=extension)
+    def save(self,save_to_file,extension="svg"):
+        r"""
+        """
+        save_graphviz(self.graphviz_string(),save_to_file,extension=extension)            
     def __repr__(self):
         r"""
         String representation.
@@ -1043,7 +1045,7 @@ class Automaton(object):
         """
         d = {}
         if self._type == "boolean":
-            return hash_matrix(np.identity(len(self._states)))
+            return hash_matrix(np.identity(len(self._states),dtype=int))
         if self._type == "buchi":
             for x in range(len(self._states)):
                 for y in range(len(self._states)):
@@ -1054,7 +1056,7 @@ class Automaton(object):
             return RingMatrix((len(self._states),len(self._states)),d)        
         raise ValueError("Automaton type"+self._type+" is unsupported yet")
 
-    def letter_to_algebra(self,letter):
+    def letter_to_algebra(self,letter,verbose=True):
         r"""
         return a matrix representing letter action on state.
         The return type depend on the choosed of aut_type in init. Only work
@@ -1071,8 +1073,8 @@ class Automaton(object):
             L = []
             for x in range(n):
                 Lx = list()
-                for y in range(n):                    
-                    if ((states[x],letter) in self._transitions)  and ( y in self._transitions[(states[x],letter)]):
+                for y in range(n):
+                    if ((states[x],letter) in self._transitions)  and (states[y] in self._transitions[(states[x],letter)]):
                         Lx.append(1)
                     else:
                         Lx.append(0)

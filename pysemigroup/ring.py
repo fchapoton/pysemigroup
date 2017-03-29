@@ -81,4 +81,12 @@ class hash_matrix(np.matrixlib.defmatrix.matrix):
         return (hash(self)==hash(other))
     def is_idempotent(self):
         return (self == (self*self))
+    def inversible(self):
+        if np.linalg.det(self) == 0:
+            return False
+        else:
+            return True
+    def inverse(self):
+        N =  np.linalg.inv(self)
+        return hash_matrix(N.astype(int))
         

@@ -1,5 +1,5 @@
 from .automata import Automaton
-from .utils import view_graphviz
+from .utils import view_graphviz, save_graphviz
 import networkx as nx
 import os
 import tempfile
@@ -66,12 +66,13 @@ def draw_box_dot(box,idempotents,colors_list=False):
     s = '"{'
     for L in box:
         for H in L:
+            sh = ""
             for a in H:
                 if a in idempotents:
-                    s+= "<"+str(a)+">"+str(a)+"*,"
+                    sh= "<"+str(a)+">"+str(a)+"*,"+sh
                 else:
-                    s+= str(a)+","
-            s = s[0:len(s)-1]+'|'
+                    sh+= str(a)+","
+            s = s+sh[0:len(sh)-1]+'|'
         s = s[0:len(s)-1]+'}|{'
     return s[0:len(s)-2]+'"'
 
@@ -367,7 +368,7 @@ class TransitionSemiGroup:
             k = self.elements()
             l = list(self._Representations)
             for x in l:
-                if x.is_one():
+                if x == self._automaton.identity_on_automata_ring():
                     self._identity = self._Representations[x]
                     return self._identity
             raise ValueError("No indentity in this semigroup")
@@ -394,20 +395,23 @@ class TransitionSemiGroup:
             return self._computed_rep[v]
         l = self.elements()        
         u = monoidElement(v)
+        if verbose:
+            print(len(u))
         if u in self._Representations.values():
             fu = u
         else:        
             if len(u) == 0:
                 fu = self.get_identity()  
-            if len(u) == 1:
+            elif len(u) == 1:
                 if u in self._letter_quot:     
                     fu = self._Representations[self._letter_quot[u]]
                 else:
                     raise TypeError("Letter "+str(v)+" is not in the underlying alphabet: "+str(self._generators))
-            fu_raw = self._Representations_rev[self.representent(v[0])]
-            for i in v[1:len(v)]:
-                fu_raw = fu_raw*self._Representations_rev[self.representent(i)]
-            fu = self._Representations[fu_raw]
+            else:
+                fu_raw = self._Representations_rev[self.representent((v[0],),verbose=verbose)]
+                for i in v[1:len(v)]:
+                    fu_raw = fu_raw*self._Representations_rev[self.representent((i,),verbose=verbose)]
+                fu = self._Representations[fu_raw]
         self._computed_rep[v]=fu
         return fu
 
@@ -460,29 +464,30 @@ class TransitionSemiGroup:
             Looped multi-digraph on 6 vertices
         """
         if orientation in self._cayley_graphs:
-            return self._cayley_graphs[orientation]
+            return nx.DiGraph(self._cayley_graphs[orientation])
         d = {}
         A = self._generators
         G = nx.DiGraph()
         for x in self:
             G.add_node(x)
-        if orientation in  ["right","left_right"]:
-            for x in self:                
-                for c in A:                
-                    if orientation in  ["right","left_right"]:
-                        edge = (x,self.representent(x+c,verbose=verbose))
-                        if edge in G.edges():
-                            G.edge[edge[0]][edge[1]]["label"].add((c,"r"))
-                        else:
-                            G.add_edge(x,self(x+c),{"label":set([(c,"r")])})
-                    if orientation in  ["left","left_right"]:
-                        edge = (x,self(c+x))
-                        if edge in G.edges():
-                            G.edge[edge[0]][edge[1]]["label"].add((c,"l"))
-                        else:
-                            G.add_edge(x,self(c+x),{"label":set([(c,"l")])})
+        for x in self:                
+            for c in A:                
+                if orientation in  ["right","left_right"]:
+                    if verbose:
+                        print(x,"#",x+c)
+                    edge = (x,self.representent(x+c,verbose=verbose))
+                    if edge in G.edges():
+                        G.edge[edge[0]][edge[1]]["label"].add((c,"r"))
+                    else:
+                        G.add_edge(x,self(x+c),{"label":set([(c,"r")])})
+                if orientation in  ["left","left_right"]:
+                    edge = (x,self(c+x))
+                    if edge in G.edges():
+                        G.edge[edge[0]][edge[1]]["label"].add((c,"l"))
+                    else:
+                        G.add_edge(x,self(c+x),{"label":set([(c,"l")])})
         self._cayley_graphs[orientation] = G
-        return G         
+        return nx.DiGraph(G)         
 
     def cayley_graphviz_string(self, orientation="left_right"):
         s = 'digraph {\n node [margin=0 shape="circle" ]\n'
@@ -522,11 +527,6 @@ class TransitionSemiGroup:
                     
                 if len(edge)>0:
                     s = s+ '  "'+str(x)+'" -> "'+str(y)+'"['
-                    if edge_label:
-                        s = s + 'label="'+str(edge.pop())
-                        while len(edge)>0:
-                            s = s+ ','+str(edge.pop())
-                        s = s + '",'
                     if y == x:
                         s =  s+ 'topath="loop above"'
                     s = s + '];\n'
@@ -634,23 +634,29 @@ class TransitionSemiGroup:
                 if not self.representent(i+j) in set(S):
                     return False
         return True
-
-    def sub_semigroup_generated(self, E, verbose=False):
-        F = set(E)
-        G = set()
-        while len(F) > 0:
-            if verbose:
-                print("new element len:"+str(len(F)))
-                sys.stdout.write("\033[F")                                             
- 
-            G = G.union(F)
-            F = set()
-            for x in G:
-                for y in G:
-                    if  (not self(x+y) in G):
-                        F.add(self(x+y))
-        return G
-
+    
+    def sub_semigroup_generated(self, E, monoid=False):        
+        Generators = set([self(x) for x in E])
+        NewElements = set(Generators)
+        d = {}
+        for x in Generators:
+            d[(self(""),(x,))] = [x]
+        Reached = set(Generators)
+        while len(NewElements) > 0:
+            Buffer = set()
+            for x in NewElements:
+                for y in Generators:
+                    z = self(x+y)
+                    d[(x,(y,))] = [z]
+                    if (not z in Reached):
+                        Buffer.add(z)
+                        Reached.add(z)
+                    
+            NewElements = set(Buffer)        
+        return TransitionSemiGroup(Automaton(d,[],[]),monoid=monoid)
+    def sub_monoid_generated(self,E):
+        return self.sub_semigroup_generated(E,monoid=True)
+        
     def _stable(self, verbose=False):
         if self._stable_comp:
             return self._stable_comp
@@ -691,7 +697,6 @@ class TransitionSemiGroup:
         """
 
         return self._stable()[1]
-
         
     def stable_set(self, verbose=False):
         r"""
@@ -908,12 +913,15 @@ class TransitionSemiGroup:
         for x in box:
             box[x] = self.newbox_oldbox(x,verbose=verbose)
         return box
-        
-    def view(self, arrow=True,verbose=False,unfold=True):
-        view_graphviz(self.graphviz_string(arrow=arrow,verbose=verbose,unfold=unfold))
+    def box_to_file(self,filename):
+        save_graphviz(self.graphviz_string(),filename)
+    def view(self, save_to_file=None,arrow=True,verbose=False,unfold=True,extension="svg"):
+        view_graphviz(self.graphviz_string(arrow=arrow,verbose=verbose,unfold=unfold),save_to_file=save_to_file,extension=extension)
 
-    def view_cayley(self,orientation="left_right"):
-        view_graphviz(self.cayley_graphviz_string(orientation=orientation))        
+    def view_cayley(self,orientation="left_right",save_to_file=None,extension="svg"):
+        view_graphviz(self.cayley_graphviz_string(orientation=orientation),save_to_file=save_to_file,extension=extension)        
+    def cayley_to_file(self,filename,orientation="left_right"):
+        save_graphviz(self.cayley_graphviz_string(orientation=orientation),filename)
         
     def is_Ap(self,verbose=False):
         for e in self.idempotents():
@@ -966,16 +974,7 @@ class TransitionSemiGroup:
             return G.sinks()[0] 
         else:
             raise ValueError("The semigroup must have a zero")
-    
-                    
-    def to_gif(self,s):
-        f = file(s+".dot",'w')
-        f.write(self.graphviz_string())
-        f.close()
-        os.system('dot -Tgif %s -o %s; rm %s  2>/dev/null 1>/dev/null &'%(s+".dot",s+".gif",s+".dot"))
-
-
-
+        
 
 
 
@@ -1066,7 +1065,7 @@ color=black;
 fillcolor=azure;\n"""
         O = self.omega_elements()
         for x in O:
-            s +='  "'+str(x)+'"[label="'+str(x)+'",shape=rectangle];\n'
+            s +='  "'+str(x)+'"[label="'+str(x)+'",shape=rectangle,fillpcolor=white];\n'
         s += '}\n'
         for e in d:
             s += '   "'+str(e[0])+'"->"'+str(e[1])+'"[label="'+str(e[2])+'."];\n'
@@ -1081,8 +1080,8 @@ fillcolor=azure;\n"""
         for k in sources:
             s +=  '   '+str(J_min)+' -> "'+str(k)+'"[style=invis];\n'
         return s
-    def cayley_graphviz_string(self,edge_label=True, orientation="left_right"):
-        s = TransitionSemiGroup.cayley_graphviz_string(self,edge_label=edge_label, orientation=orientation)
+    def cayley_graphviz_string(self,orientation="left_right"):
+        s = TransitionSemiGroup.cayley_graphviz_string(self,orientation=orientation)
         return s[0:len(s)-1]+self._omega_graphviz_string()+"}" 
 
     def graphviz_string(self,arrow=True,verbose=False,unfold=True,colors_list=False):
