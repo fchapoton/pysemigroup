@@ -1,0 +1,15 @@
+MANIFEST.in
+README.rst
+setup.py
+pysemigroup/__init__.py
+pysemigroup/automata.py
+pysemigroup/logic.py
+pysemigroup/regular_language.py
+pysemigroup/ring.py
+pysemigroup/transition_semigroup.py
+pysemigroup/utils.py
+semigroup.egg-info/PKG-INFO
+semigroup.egg-info/SOURCES.txt
+semigroup.egg-info/dependency_links.txt
+semigroup.egg-info/requires.txt
+semigroup.egg-info/top_level.txt
