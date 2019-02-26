@@ -139,6 +139,7 @@ class TransitionSemiGroup():
         self._R_class = dict()
         self._stable_comp = False
         self._J_class = dict()
+        self._J_ideal = dict()
         self._L_class = dict()
         self._H_class = dict()
         self._cayley_graphs = dict()
@@ -750,7 +751,7 @@ class TransitionSemiGroup():
 
 
     def J_ideal_of_element(self,x):
-        xs = representent(x)
+        xs = self.representent(x)
         if not (x in self._J_ideal):
             self._compute_J_ideal()
         return self._J_ideal[xs]

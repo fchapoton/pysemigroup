@@ -51,7 +51,6 @@ class Automaton(object):
         automata
 
         EXAMPLES::
-
             sage: from pysemigroup import Automaton
             sage: d={('p','a'):'q',('q','a'):'p',('p','b'):'p',('q','b'):'q'}
             sage: A= Automaton(d,['p'],['p'])
