@@ -2,6 +2,7 @@ LICENSE
 MANIFEST.in
 README.rst
 makefile
+setup.cfg
 setup.py
 pysemigroup/__init__.py
 pysemigroup/automata.py

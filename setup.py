@@ -1,12 +1,11 @@
 from setuptools import setup
 setup(name='pysemigroup',
-      version='0.3a4',
+      version='0.3a5',
       description='A tool to manipulate transitions semigroups and display them',
-      url='http://github.com/charles-paperman/pysemigroup',
+      url='https://gitlab.inria.fr/cpaperma/pysemigroup',
       author='Charles Paperman',
-      author_email='charles.paperman@gmail.com',
+      author_email='charles.paperman@univ-lille.fr',
       license='GPLv2+',
       packages=['pysemigroup'],
       keywords='sagemath automata semigroups monoid regular language',
-      install_requires=["networkx","numpy"]
-)
+      install_requires=["networkx","numpy"])

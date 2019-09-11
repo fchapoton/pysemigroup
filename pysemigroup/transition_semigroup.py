@@ -640,8 +640,9 @@ class TransitionSemiGroup():
         Generators = set([self(x) for x in E])
         NewElements = set(Generators)
         d = {}
-        for x in Generators:
-            d[(self(""),(x,))] = [x]
+        if monoid:
+            for x in Generators:
+                d[(self(""),(x,))] = [x]
         Reached = set(Generators)
         while len(NewElements) > 0:
             Buffer = set()
@@ -651,8 +652,7 @@ class TransitionSemiGroup():
                     d[(x,(y,))] = [z]
                     if (not z in Reached):
                         Buffer.add(z)
-                        Reached.add(z)
-                    
+                        Reached.add(z)                 
             NewElements = set(Buffer)        
         return TransitionSemiGroup(Automaton(d,[],[]),monoid=monoid)
     def sub_monoid_generated(self,E):
