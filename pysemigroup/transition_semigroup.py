@@ -655,6 +655,7 @@ class TransitionSemiGroup():
                         Reached.add(z)                 
             NewElements = set(Buffer)        
         return TransitionSemiGroup(Automaton(d,[],[]),monoid=monoid)
+    
     def sub_monoid_generated(self,E):
         return self.sub_semigroup_generated(E,monoid=True)
         
