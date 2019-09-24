@@ -13,8 +13,7 @@ pip3 install pysemigroup
 ```
 
 # Usage 
-
-See the notebooks. 
+Notebook will come hopefully soon. 
 
 # Online tools
 
