@@ -1,6 +1,6 @@
 Metadata-Version: 1.0
 Name: pysemigroup
-Version: 0.3b1
+Version: 0.3b3
 Summary: A tool to manipulate transitions semigroups and display them
 Home-page: https://gitlab.inria.fr/cpaperma/pysemigroup
 Author: Charles Paperman

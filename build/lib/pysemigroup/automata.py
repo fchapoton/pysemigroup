@@ -1044,7 +1044,7 @@ class Automaton(object):
         """
         d = {}
         if self._type == "boolean":
-            return hash_matrix(np.identity(len(self._states),dtype=int))
+            return hash_matrix(np.identity(len(self._states),dtype=bool))
         if self._type == "buchi":
             for x in range(len(self._states)):
                 for y in range(len(self._states)):

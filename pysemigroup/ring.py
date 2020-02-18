@@ -87,6 +87,6 @@ class hash_matrix(np.matrixlib.defmatrix.matrix):
         else:
             return True
     def inverse(self):
-        N =  np.linalg.inv(self)
-        return hash_matrix(N.astype(int))
+        N =  np.linalg.inv(self).astype(self.dtype)
+        return hash_matrix(N)
 
