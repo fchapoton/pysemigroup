@@ -1,6 +1,6 @@
 from setuptools import setup
 setup(name='pysemigroup',
-      version='0.3a8',
+      version='0.3b1',
       description='A tool to manipulate transitions semigroups and display them',
       url='https://gitlab.inria.fr/cpaperma/pysemigroup',
       author='Charles Paperman',

@@ -575,7 +575,7 @@ class TransitionSemiGroup():
             G = self.cayley_graph(orientation="left_right")
             K = nx.condensation(G,nx.strongly_connected_components(G))
             T = nx.topological_sort(K)
-            T = [K.node[i]["members"] for i in T]
+            T = [K.nodes[i]["members"] for i in T]
             self._J_topological_sort = T
         return T
     def pop_J_maximal(self,E):
@@ -1080,7 +1080,7 @@ class BuchiTransitionOmegaSG(TransitionSemiGroup):
         d = self.left_omega_cayley(label=False)
         G = nx.condensation(nx.DiGraph(d))
         T = nx.topological_sort(G)[0]
-        sources = G.node[T]["members"]
+        sources = G.nodes[T]["members"]
         d = self.left_omega_cayley()
         J_min = self._get_J_topological_sort()
         J_min = J_min[len(J_min)-1]

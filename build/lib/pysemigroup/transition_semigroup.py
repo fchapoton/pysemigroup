@@ -6,7 +6,7 @@ import tempfile
 import sys
 import webbrowser
 from .ring import *
-        
+
 class monoidElement(tuple):
     def __repr__(self):
         s = ""
@@ -14,14 +14,14 @@ class monoidElement(tuple):
             s += str(x)
         if s == "":
             return "1"
-        else: 
-            return s    
+        else:
+            return s
     def __add__(self,other):
         r = list()
         for x in self:
             r.append(x)
         for y in other:
-            r.append(y)                    
+            r.append(y)
         return monoidElement(r)
     def __getslice__(self,i,j):
         return monoidElement(tuple(self).__getslice__(i,j))
@@ -56,11 +56,11 @@ def draw_box(box):
         s = s + '$'+str(l.pop())
         while len(l) > 0:
             s = s+'$&$'+str(l.pop())
-        s = s+'$\\\\\n\\hline\n'   
+        s = s+'$\\\\\n\\hline\n'
     s = s.replace("['","")
     s = s.replace("']","")
     s = s.replace("'","")
-   
+
     return s+'\\end{tabular}'
 def draw_box_dot(box,idempotents,colors_list=False):
     s = '"{'
@@ -82,10 +82,10 @@ def draw_box_dot_old(box,idempotents,colors_list=False,):
         #uns = u.replace("*","")
         s = s + "<tr>"
         for H in L:
-            if not colors_list:     
+            if not colors_list:
                 s = s + "<td>"
             else:
-                s = s + "<td bgcolor="+colors_list[H[0]]+">"        
+                s = s + "<td bgcolor="+colors_list[H[0]]+">"
             for a in H:
                 if a in idempotents:
                     s = s + str(a) +"*,"
@@ -93,10 +93,10 @@ def draw_box_dot_old(box,idempotents,colors_list=False,):
                     s = s + str(a) +","
 
             s = s[0:len(s)-1] + "</td>"
-            #uns = u.replace("*","")              
+            #uns = u.replace("*","")
         s = s+"</tr>"
-    s = s + '</table>>' 
-    return s                        
+    s = s + '</table>>'
+    return s
 
 class TransitionSemiGroup():
     r"""
@@ -111,8 +111,8 @@ class TransitionSemiGroup():
         Transition semigroup
 
     EXAMPLES::
-    
-        sage: from pysemigroup import Automaton, TransitionSemiGroup  
+
+        sage: from pysemigroup import Automaton, TransitionSemiGroup
         sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
         sage: A = Automaton(d,[0],[1])
         sage: S = TransitionSemiGroup(A)
@@ -123,8 +123,8 @@ class TransitionSemiGroup():
     def __init__(self, automaton, monoid=True,compute=False, max_size= 0):
         r"""
         EXAMPLES::
-        
-            sage: from pysemigroup import Automaton, TransitionSemiGroup  
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
@@ -139,20 +139,21 @@ class TransitionSemiGroup():
         self._R_class = dict()
         self._stable_comp = False
         self._J_class = dict()
+        self._J_ideal = dict()
         self._L_class = dict()
         self._H_class = dict()
         self._cayley_graphs = dict()
-        self._generators = [monoidElement(x) for x in automaton._alphabet]      
+        self._generators = [monoidElement(x) for x in automaton._alphabet]
         d = dict(automaton._transitions)
-        self._automaton = Automaton(d,automaton._initial_states,automaton._final_states,aut_type=automaton._type)         
+        self._automaton = Automaton(d,automaton._initial_states,automaton._final_states,aut_type=automaton._type)
         if compute:
             l = self.elements(max_size=max_size)
-        self._computed_rep = dict()        
+        self._computed_rep = dict()
     def __repr__(self):
         r"""
         EXAMPLES::
-        
-            sage: from pysemigroup import Automaton, TransitionSemiGroup          
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
@@ -162,41 +163,41 @@ class TransitionSemiGroup():
         return "Transition SemiGroup of %s" % self._automaton
 
     def graphviz_string(self, arrow=True,verbose=False,unfold=True,colors_list=False,get_repr=False):
-        r"""  
+        r"""
         Return graphviz eggbox representation of self. Set arrow to False to delete the arrow.
         INPUT :
-        -  ``self`` -  Automaton        
+        -  ``self`` -  Automaton
         -  ``arrow`` -  boolean
         -  ``verbose`` -  boolean
 
         OUTPUT:
 
-        string 
+        string
 
         EXAMPLES::
             sage: from pysemigroup import Automaton, TransitionSemiGroup
-                    
+
         """
 
         #from sage.plot.colors import rainbow
         #col = rainbow(len(colors_list))
         #col_dic = {}
-        
+
         #for x in colors_list:
-        #      for y in x:            
+        #      for y in x:
         if verbose:
             print("computing box diagramm ...")
-       
-        box = self.box_representation(verbose=verbose)        
+
+        box = self.box_representation(verbose=verbose)
         idempotents = self.idempotents()
         if verbose:
             print("done.")
-        repre = set(box) 
-        Gcal =  nx.condensation(self.cayley_graph(orientation="left_right"))  
+        repre = set(box)
+        Gcal =  nx.condensation(self.cayley_graph(orientation="left_right"))
         if verbose:
             edge_nb = str(len(Gcal.edges()))
             print("computing global structure ...")
-        count = 0 
+        count = 0
         if verbose:
             print("done.")
         Edge = []
@@ -211,16 +212,16 @@ class TransitionSemiGroup():
             else:
                graph_viz = graph_viz + rx + ' [label='+rx+',shape="rectangle"];\n'
 
-        if not arrow:         
-            graph_viz = graph_viz + 'edge [style="invis"]\n'            
+        if not arrow:
+            graph_viz = graph_viz + 'edge [style="invis"]\n'
         if verbose:
             print("computing successor edges ...")
             count = 0
             loop_ln = len(repre)^2
-        for x in repre:        
+        for x in repre:
             for y in repre:
                 edge = (Gcal.graph["mapping"][x],Gcal.graph["mapping"][y])
-                if edge  in Gcal.edges():      
+                if edge  in Gcal.edges():
                     if x == '' or x == ():
                         rx = '1'
                     else:
@@ -239,69 +240,69 @@ class TransitionSemiGroup():
     def __call__(self,word):
         r"""
         Return the representent of word in the semigroup
-        
+
         EXAMPLES::
 
-            sage: from pysemigroup import Automaton, TransitionSemiGroup                      
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0],  (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
-            sage: A = Automaton(d,[1],[1])            
-            sage: S = TransitionSemiGroup(A) 
-            sage: S("abaaa")                   
+            sage: A = Automaton(d,[1],[1])
+            sage: S = TransitionSemiGroup(A)
+            sage: S("abaaa")
             aa
 
         """
-        return self.representent(word)        
+        return self.representent(word)
 
     def __len__(self):
         r"""
-        
+
         EXAMPLE::
-            
+
         """
-        return len(self.elements())        
+        return len(self.elements())
     def length(self,maxsize=0):
         r"""
-        
+
         EXAMPLE::
-            
+
         """
         E = self.elements(maxsize=maxsize)
         if E == False:
             return maxsize+1
-        return len(E)  
+        return len(E)
 
     def __iter__(self):
         r"""
-        Return an iterator of the elements of the semigroup.        
-        
+        Return an iterator of the elements of the semigroup.
+
         EXAMPLES::
-        
-            sage: from pysemigroup import Automaton, TransitionSemiGroup          
+
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0],  (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
-            sage: A = Automaton(d,[1],[1])            
-            sage: S = TransitionSemiGroup(A)                   
+            sage: A = Automaton(d,[1],[1])
+            sage: S = TransitionSemiGroup(A)
             sage: it = iter(S)
             sage: sorted(it)
             [1, a, aa, ab, b, ba]
         """
         for x in self.elements():
             yield x
-                   
-    
+
+
     def _compute_semigroup(self, verbose=False):
         if not self._compute:
             E = self.elements(verbose=verbose)
-        
+
     def elements(self, maxsize= 0, verbose=False):
         r"""
         Compute the transition semigroup of the automaton
-        
+
         INPUT :
-        
+
         -  ``verbose`` - boolean
         EXAMPLES::
 
-            sage: from pysemigroup import Automaton, TransitionSemiGroup          
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
@@ -322,22 +323,22 @@ class TransitionSemiGroup():
             if not(fctx  in Sg):
                 Rep[fctx] = monoidElement(x)
                 Rep_rv[monoidElement(x)] = fctx
-                Sg.append(fctx)                     
+                Sg.append(fctx)
             else:
                 letter_quot[x] = fctx
         Gene = list(Sg)
-        last = list(Sg)                        
+        last = list(Sg)
         if self._monoid:
             ident = Aut.identity_on_automata_ring()
             if ident not in Sg:
                 Rep[ident] = monoidElement("")
                 Rep_rv[monoidElement("")] = ident
-                Sg.append(ident)        
+                Sg.append(ident)
         count = 0
-        while len(last)>0:            
+        while len(last)>0:
             old = list(last)
             last = []
-            count = count + 1  
+            count = count + 1
             if (maxsize>0) and (len(Sg)>maxsize):
                 return False
             for u in old:
@@ -362,7 +363,7 @@ class TransitionSemiGroup():
         self._elements = frozenset(self._Representations_rev)
         return self._elements
     def get_identity(self):
-        try: 
+        try:
             return self._identity
         except:
             k = self.elements()
@@ -377,7 +378,7 @@ class TransitionSemiGroup():
         Return a representent of the equivalence class of the word u in the transition semigroup
         p
         INPUT :
-        
+
         - ``u``  - string or monoid element
 
         EXAMPLES::
@@ -393,17 +394,17 @@ class TransitionSemiGroup():
             print(v)
         if v in self._computed_rep:
             return self._computed_rep[v]
-        l = self.elements()        
+        l = self.elements()
         u = monoidElement(v)
         if verbose:
             print(len(u))
         if u in self._Representations.values():
             fu = u
-        else:        
+        else:
             if len(u) == 0:
-                fu = self.get_identity()  
+                fu = self.get_identity()
             elif len(u) == 1:
-                if str(u) in self._letter_quot:     
+                if str(u) in self._letter_quot:
                     fu = self._Representations[self._letter_quot[str(u)]]
                 else:
                     raise TypeError("Letter "+str(v)+" is not in the underlying alphabet: "+str(self._generators))
@@ -421,7 +422,7 @@ class TransitionSemiGroup():
 
         EXAMPLES::
 
-            sage: from pysemigroup import Automaton, TransitionSemiGroup  
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
@@ -430,7 +431,7 @@ class TransitionSemiGroup():
 
         """
         self._compute_semigroup()
-        if not(self._idempotents): 
+        if not(self._idempotents):
             I = set()
             for u in self.elements():
                 if self(u+u) == self(u):
@@ -439,7 +440,7 @@ class TransitionSemiGroup():
             return I
         else:
             return set(self._idempotents)
-                    
+
 
     def _relabel_idempotent(self,u):
         if u in self.idempotents():
@@ -450,14 +451,14 @@ class TransitionSemiGroup():
         r"""
         Return the Cayley graph of the semigroup
         INPUT :
-        
-        - ``orientation``  -- string --  value "left", "left_right", "right".        
+
+        - ``orientation``  -- string --  value "left", "left_right", "right".
 
         EXAMPLES::
 
-            sage: from pysemigroup import Automaton, TransitionSemiGroup  
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0],  (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
-            sage: A = Automaton(d,[1],[1])            
+            sage: A = Automaton(d,[1],[1])
             sage: S = TransitionSemiGroup(A)
             sage: G = S.cayley_graph()
             sage: G
@@ -470,24 +471,24 @@ class TransitionSemiGroup():
         G = nx.DiGraph()
         for x in self:
             G.add_node(x)
-        for x in self:                
-            for c in A:                
+        for x in self:
+            for c in A:
                 if orientation in  ["right","left_right"]:
                     if verbose:
                         print(x,"#",x+c)
                     edge = (x,self.representent(x+c,verbose=verbose))
                     if edge in G.edges():
-                        G.edge[edge[0]][edge[1]]["label"].add((c,"r"))
+                        G.edges[(edge[0],edge[1])]["label"].add((c,"r"))
                     else:
                         G.add_edge(x,self(x+c), label=set([(c,"r")]))
                 if orientation in  ["left","left_right"]:
                     edge = (x,self(c+x))
                     if edge in G.edges():
-                        G.edge[edge[0]][edge[1]]["label"].add((c,"l"))
+                        G.edges[(edge[0],edge[1])]["label"].add((c,"l"))
                     else:
                         G.add_edge(x,self(c+x), label=set([(c,"l")]))
         self._cayley_graphs[orientation] = G
-        return nx.DiGraph(G)         
+        return nx.DiGraph(G)
 
     def cayley_graphviz_string(self, orientation="left_right"):
         s = 'digraph {\n node [margin=0 shape="circle" ]\n'
@@ -516,32 +517,32 @@ class TransitionSemiGroup():
                     s = s + ' fontcolor="blue"'
                 s = s +'];\n'
             s = s + '}\n'
-        for x in self:        
+        for x in self:
             for y in self:
                 edge = []
-                for a in self._generators:                    
+                for a in self._generators:
                     if (orientation in ["right","left_right"]) and y == self(x+a):
                         edge.append("."+str(a))
                     if (orientation in ["left","left_right"]) and y == self(a+x):
                         edge.append(str(a)+".")
-                    
+
                 if len(edge)>0:
                     s = s+ '  "'+str(x)+'" -> "'+str(y)+'"['
                     if y == x:
                         s =  s+ 'topath="loop above"'
                     s = s + '];\n'
-        s = s+'}'    
-        return s    
+        s = s+'}'
+        return s
     def is_Group(self):
         E = self.idempotents()
         return (len(E) == 1)
-    
-            
-    
+
+
+
     def idempotent_power(self,u):
         r"""
         Return the idempotents power of the word u
-        
+
         INPUT :
 
         -  ``u`` -  (word)
@@ -565,9 +566,9 @@ class TransitionSemiGroup():
         else:
             g = u
             while not (g.is_idempotent) :
-                g = u * g 
+                g = u * g
             return g
-    def _get_J_topological_sort(self):        
+    def _get_J_topological_sort(self):
         try :
             T = self._J_topological_sort
         except:
@@ -577,46 +578,46 @@ class TransitionSemiGroup():
             T = [K.node[i]["members"] for i in T]
             self._J_topological_sort = T
         return T
-    def pop_J_maximal(self,E):  
+    def pop_J_maximal(self,E):
         r"""
-            Output the J-maximal element of E and delete it.         
+            Output the J-maximal element of E and delete it.
         INPUT :
-        -  ``E`` -  set 
+        -  ``E`` -  set
 
         EXAMPLES::
-            sage: from pysemigroup import Automaton, TransitionSemiGroup  
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [2], (0, 'b'): [1], (1, 'a'): [0],  (1, 'b'): [2], (2, 'a'): [2], (2, 'b'): [2]}
-            sage: A = Automaton(d,[1],[1])  
+            sage: A = Automaton(d,[1],[1])
             sage: S = TransitionSemiGroup(A)
             sage: E = set(S.elements())
             sage: S.pop_J_maximal(E)
             1
 
         """
-        
+
         if len(E) == 0 or not E.issubset(self.elements()):
             return False
         T = self._get_J_topological_sort()
         for x in T:
             F = set(x).intersection(E)
-            if len(F) > 0:                
+            if len(F) > 0:
                 y = F.pop()
                 E.remove(y)
                 return y
-        return E.pop()  
-    
+        return E.pop()
+
     def is_sub_semigroup(self, S, verbose = False):
         r"""
         Return whether S is a sub semigroup of self.
-        
+
         INPUT :
 
         -  ``S`` - iterable of words
-        -  ``verbose`` - boolean 
+        -  ``verbose`` - boolean
 
-        
+
         EXAMPLES::
-            sage: from pysemigroup import Automaton, TransitionSemiGroup             
+            sage: from pysemigroup import Automaton, TransitionSemiGroup
             sage: d = {(0, 'a'): [1], (1, 'a'): [0]}
             sage: A = Automaton(d,[0],[1])
             sage: S = TransitionSemiGroup(A)
@@ -630,17 +631,18 @@ class TransitionSemiGroup():
         for i in S:
             for j in S:
                 if verbose:
-                    print(str((i,j)))        
+                    print(str((i,j)))
                 if not self.representent(i+j) in set(S):
                     return False
         return True
-    
-    def sub_semigroup_generated(self, E, monoid=False):        
+
+    def sub_semigroup_generated(self, E, monoid=False):
         Generators = set([self(x) for x in E])
         NewElements = set(Generators)
         d = {}
-        for x in Generators:
-            d[(self(""),(x,))] = [x]
+        if monoid:
+            for x in Generators:
+                d[(self(""),(x,))] = [x]
         Reached = set(Generators)
         while len(NewElements) > 0:
             Buffer = set()
@@ -651,12 +653,12 @@ class TransitionSemiGroup():
                     if (not z in Reached):
                         Buffer.add(z)
                         Reached.add(z)
-                    
-            NewElements = set(Buffer)        
+            NewElements = set(Buffer)
         return TransitionSemiGroup(Automaton(d,[],[]),monoid=monoid)
+
     def sub_monoid_generated(self,E):
         return self.sub_semigroup_generated(E,monoid=True)
-        
+
     def _stable(self, verbose=False):
         if self._stable_comp:
             return self._stable_comp
@@ -674,17 +676,17 @@ class TransitionSemiGroup():
                 for a in A:
                     T.add(self(u+a))
             S = T
-        self._stable_comp = (S,i)    
-        return (S,i)        
-        
+        self._stable_comp = (S,i)
+        return (S,i)
+
     def stability_index(self, verbose=False):
         r"""
         Return the stablility index
 
         OUTPUT :
-            
+
             integer s
-        
+
         EXAMPLES::
 
             sage: from pysemigroup import Automaton, TransitionSemiGroup
@@ -697,15 +699,15 @@ class TransitionSemiGroup():
         """
 
         return self._stable()[1]
-        
+
     def stable_set(self, verbose=False):
         r"""
         Return the stable semigroup
 
         OUTPUT :
-            
-            tuple (i,S) 
-        
+
+            tuple (i,S)
+
         EXAMPLES::
 
             sage: from pysemigroup import Automaton, TransitionSemiGroup
@@ -725,7 +727,7 @@ class TransitionSemiGroup():
         for x in S:
             for y in S:
                 d[(str(x),(str(y),))] = [str(self(x+y))]
-        return TransitionSemiGroup(Automaton(d,[0],[0]))        
+        return TransitionSemiGroup(Automaton(d,[0],[0]))
     def stabilized_automaton(self):
         r"""
         Return the automata recognizing the language enriched by modular counting
@@ -746,11 +748,11 @@ class TransitionSemiGroup():
             for i in range(s):
                 d[(i,(a,i))] = [(i+1)%s]
         Count_Aut = Automaton(d,[0],range(s))
-        return Enr_Aut.intersection(Count_Aut).minimal_automaton()                                
+        return Enr_Aut.intersection(Count_Aut).minimal_automaton()
 
 
     def J_ideal_of_element(self,x):
-        xs = representent(x)
+        xs = self.representent(x)
         if not (x in self._J_ideal):
             self._compute_J_ideal()
         return self._J_ideal[xs]
@@ -758,7 +760,7 @@ class TransitionSemiGroup():
         G = nx.transitive_closure(self.cayley_graph(orientation="left_right"))
         for x in self:
             self._J_ideal[x] = set(G.neighbors(x))
-            
+
     def _compute_R_class(self):
         G = self.cayley_graph(orientation="right")
         for K in nx.strongly_connected_components(G):
@@ -768,12 +770,12 @@ class TransitionSemiGroup():
         G = self.cayley_graph(orientation="left")
         for K in nx.strongly_connected_components(G):
             for x in K:
-                self._L_class[x] = K                
+                self._L_class[x] = K
     def _compute_J_class(self):
         G = self.cayley_graph(orientation="left_right")
         for K in nx.strongly_connected_components(G):
             for x in K:
-                self._J_class[x] = K                
+                self._J_class[x] = K
     def J_class_of_element(self,x):
         xs = self.representent(x)
         if xs not in self._J_class:
@@ -804,7 +806,7 @@ class TransitionSemiGroup():
                 return False
         return True
 
-    
+
     def _sg_reverse(self,u,v):
         S = self
         G = S.cayley_graph(orientation="left_right")
@@ -816,17 +818,17 @@ class TransitionSemiGroup():
         l.reverse()
         x = l.pop()
         w1 = monoidElement("")
-        w2 = monoidElement("")    
+        w2 = monoidElement("")
         while len(l)>0:
             y = l.pop()
-            a = list(G.edge[x][y]["label"])[0]
+            a = list(G.edges[(x,y)]["label"])[0]
             if a[1] == "r":
                 w1 = w1 + a[0]
             else:
-                w2 = a[0] + w2 
-       
+                w2 = a[0] + w2
+
             x = y
-        return (w2,w1)                
+        return (w2,w1)
 
     def newbox(self,x,verbose=False):
         if (x not in self):
@@ -834,14 +836,14 @@ class TransitionSemiGroup():
         else:
             shiftR = []
             shiftL = []
-            box = {}       
+            box = {}
             Jx = self.J_class_of_element(x)
             Lx = self.L_class_of_element(x)
             Rx = self.R_class_of_element(x)
             Idempotents = Jx.intersection(self.idempotents())
             cx = 0
             cy = 0
-            if len(Idempotents) > 0:        
+            if len(Idempotents) > 0:
                 x = Idempotents.pop()
                 Lx = self.L_class_of_element(x)
                 Rx = self.R_class_of_element(x)
@@ -856,7 +858,7 @@ class TransitionSemiGroup():
                     z = self._sg_reverse(x,y)
 
                     Lx = Lx.difference(self.H_class_of_element(self(z[0]+x)))
-                    Rx = Rx.difference(self.H_class_of_element(self(x+z[1])))                
+                    Rx = Rx.difference(self.H_class_of_element(self(x+z[1])))
                     shiftR.append(z[1])
                     shiftL.append(z[0])
             while len(Lx) > 0:
@@ -890,10 +892,10 @@ class TransitionSemiGroup():
             L = []
             for y in range(nbox["width"]):
                 H = list(nbox[(y,x)][1])
-                
+
                 L.append(H)
             obox.append(L)
-        return obox              
+        return obox
     def box_representation(self,verbose=False):
         E = set(self.elements())
         dic = {}
@@ -904,8 +906,8 @@ class TransitionSemiGroup():
             x = self.pop_J_maximal(E)
             if verbose:
                     print("\t Dealing with "+str(x))
-            
-            Jclass = self.J_class_of_element(x)            
+
+            Jclass = self.J_class_of_element(x)
             box[x] = []
             E = E.difference(Jclass)
             if verbose:
@@ -928,10 +930,10 @@ class TransitionSemiGroup():
                       save_to_file=save_to_file,
                       extension=extension,
                       verbose=verbose)
-        
+
     def cayley_to_file(self,filename,orientation="left_right"):
         save_graphviz(self.cayley_graphviz_string(orientation=orientation),filename)
-        
+
     def is_Ap(self,verbose=False):
         for e in self.idempotents():
             H = self.H_class_of_element(e)
@@ -939,7 +941,7 @@ class TransitionSemiGroup():
                 if verbose:
                     print("A non trivial H-class for element:"+str(e))
                 return False
-        return True        
+        return True
     def is_J(self,verbose=False):
         for x in self:
             J = self.H_class_of_element(x)
@@ -947,14 +949,14 @@ class TransitionSemiGroup():
                 if verbose:
                     print("A non trivial J-class for element:"+str(x))
                 return False
-        return True        
+        return True
 
     def is_Idempotent(self,verbose=False):
         Sg = set(self.elements())
         E = set(self.idempotents())
-        if not (E == Sg) and verbose:        
+        if not (E == Sg) and verbose:
             print(str((Sg.difference(E)).pop()))
-        return E == Sg        
+        return E == Sg
 
     def is_Commutative(self,verbose=False):
         for x in self:
@@ -962,12 +964,12 @@ class TransitionSemiGroup():
                 if not (self(x+y) == self(y+x)):
                     if verbose:
                         print((x,y))
-                    return False 
+                    return False
         return True
-    
+
     def is_Jun(self,verbose=False):
         return is_Idempotent(verbose=verbose) and is_Commutative(verbose=verbose)
-          
+
 
     def has_a_zero(self):
         G = self.cayley_graph(orientation="left_right")
@@ -975,23 +977,23 @@ class TransitionSemiGroup():
         if len(G.sinks()) == 1:
             return True
         else:
-            return False   
+            return False
     def get_zero(self):
         G = self.cayley_graph(orientation="left_right")
         G.remove_loops()
         if len(G.sinks()) == 1:
-            return G.sinks()[0] 
+            return G.sinks()[0]
         else:
             raise ValueError("The semigroup must have a zero")
     def dump_to_byte(self,file_name):
-        L = [len(self)]        
+        L = [len(self)]
         M = list(self)
         for i in range(len(M)):
             for j in range(len(M)):
                  L.append(M.index(self(M[i]+M[j])))
         f = open(file_name,"wb")
         f.write(bytes(L))
-        f.close()        
+        f.close()
     def load_to_byte(self, file_name):
         f = open(file_name, "rb")
         content = f.read()
@@ -1004,7 +1006,7 @@ class TransitionSemiGroup():
                 t[(x,str(y))] = [content[size*x+y]]
         return TransitionSemiGroup(Automaton(t,[0],[0]))
 class BuchiTransitionOmegaSG(TransitionSemiGroup):
-    def __init__(self, automaton,compute=False):   
+    def __init__(self, automaton,compute=False):
         TransitionSemiGroup.__init__(self,automaton,monoid=False, compute=compute)
         self._automaton._type = "buchi"
         self._omega_compute = False
@@ -1028,7 +1030,7 @@ class BuchiTransitionOmegaSG(TransitionSemiGroup):
                 set_of_omega_raw.add(K)
         L = list(set_of_omega)
         for x in elements:
-            for z in L:                
+            for z in L:
                 Mat = self._Representations_rev[x]
                 D = omega_representation[z]
                 K = Mat*D
@@ -1037,7 +1039,7 @@ class BuchiTransitionOmegaSG(TransitionSemiGroup):
                     set_of_omega_raw.add(K)
                     omega_representation_rev[K] = x+z
                     set_of_omega.add(x+z)
-                    
+
         self._omega_representation = omega_representation
         self._omega_representation_rev = omega_representation_rev
         self._omega_compute = True
@@ -1056,7 +1058,7 @@ class BuchiTransitionOmegaSG(TransitionSemiGroup):
             O = self.omega_elements()
         O = self.omega_elements()
         return self._omega_representation_rev[self.omega_power_raw(x)]
-            
+
     def omega_power_raw(self,x):
         Mat = self._Representations_rev[self.idempotent_power(x)]
         D = Mat.diagonal()
@@ -1071,13 +1073,13 @@ class BuchiTransitionOmegaSG(TransitionSemiGroup):
                 if label:
                     d.append((x,self.omega_product(a,x),a))
                 else:
-                    d.append((x,self.omega_product(a,x)))                    
+                    d.append((x,self.omega_product(a,x)))
         return d
 
     def _omega_graphviz_string(self,give_repre=None):
         d = self.left_omega_cayley(label=False)
         G = nx.condensation(nx.DiGraph(d))
-        T = nx.topological_sort(G)[0] 
+        T = nx.topological_sort(G)[0]
         sources = G.node[T]["members"]
         d = self.left_omega_cayley()
         J_min = self._get_J_topological_sort()
@@ -1099,7 +1101,7 @@ fillcolor=azure;\n"""
                 s += '   '+str(e)+'->"'+str(self.omega_power(e))+'"[color=darkgreen, weight=10];\n'
         else:
             for x in give_repre:
-                I = set(self.idempotents()).intersection(self.J_class_of_element(x))            
+                I = set(self.idempotents()).intersection(self.J_class_of_element(x))
                 for e in I:
                     s += '   '+str(x)+":"+str(e)+'->"'+str(self.omega_power(e))+'"[color=darkgreen, weight=10];\n'
         for k in sources:
@@ -1107,7 +1109,7 @@ fillcolor=azure;\n"""
         return s
     def cayley_graphviz_string(self,orientation="left_right"):
         s = TransitionSemiGroup.cayley_graphviz_string(self,orientation=orientation)
-        return s[0:len(s)-1]+self._omega_graphviz_string()+"}" 
+        return s[0:len(s)-1]+self._omega_graphviz_string()+"}"
 
     def graphviz_string(self,arrow=True,verbose=False,unfold=True,colors_list=False):
         x = TransitionSemiGroup.graphviz_string(self,arrow=arrow,verbose=verbose,unfold=unfold,colors_list=colors_list,get_repr=True)

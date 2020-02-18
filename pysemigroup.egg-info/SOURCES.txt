@@ -1,6 +1,6 @@
 LICENSE
 MANIFEST.in
-README.rst
+README.md
 makefile
 setup.cfg
 setup.py

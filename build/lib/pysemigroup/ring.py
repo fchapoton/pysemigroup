@@ -1,5 +1,5 @@
 import numpy as np
-    
+
 class BuchiMatrix(object):
     def __repr__(self):
         s = ""
@@ -26,12 +26,12 @@ class BuchiMatrix(object):
         for x in self.data:
             if self.data[x] in proj:
                 self.data[x] = proj[self.data[x]]
-            
-    def __init__(self,dimension,data):        
+
+    def __init__(self,dimension,data):
         self.dimension = dimension
         self.data = data
         self._hash_data = {}
- 
+
     def __mul__(self,other):
         if not (self.dimension[1] == other.dimension[0]):
             raise ValueError("Dimensions mismatch for matrix product")
@@ -39,10 +39,10 @@ class BuchiMatrix(object):
         data = {}
         for x in dimension[0]:
             for y in dimension[1]:
-                data[(x,y)] = "-oo" 
+                data[(x,y)] = "-oo"
                 for k in self.dimension[1]:
                     k = buchiMul[(self.data[(x,k)],other.data[(k,y)])]
-                    data[(x,y)] = buchiAdd[(data[(x,y)],k)]          
+                    data[(x,y)] = buchiAdd[(data[(x,y)],k)]
         return BuchiMatrix(dimension,data)
     def __eq__(self,other):
         return hash(self)==hash(other)
@@ -69,7 +69,7 @@ buchiMul = {
     (1,0):1,
     (1,1):1
 }
-                    
+
 
 
 class hash_matrix(np.matrixlib.defmatrix.matrix):
@@ -89,4 +89,4 @@ class hash_matrix(np.matrixlib.defmatrix.matrix):
     def inverse(self):
         N =  np.linalg.inv(self)
         return hash_matrix(N.astype(int))
-        
+
