@@ -175,7 +175,7 @@ def test_tighness(M,output=stdout,path=""):
         for i in Pairs:
             f.write(str(Pairs[i])+"\n")
         f.close()
-    Conflit = set()
+    Conflict = set()
     for i in range(1,len(Pairs)-1):
         print  >> output, "\ttest level "+str(i)
         D = Pairs[i][1]
@@ -189,12 +189,13 @@ def test_tighness(M,output=stdout,path=""):
                 for v in F[e]:
                     for w in D[e]:
                         if M(u+w+v) not in F[e]:
-                            Conflit.add((e,M(u+w+v),i)) 
-        print  >> output, "\tDone nb of conlit:"+str(len(Conflit))
-    if len(Conflit) == 0:
+                            Conflict.add((e,M(u+w+v),i)) 
+        print  >> output, "\tDone nb of conlit:"+str(len(Conflict))
+    if len(Conflict) == 0:
         return True
     else:
-        return Conflit
+        return Conflict
+
 def test_tighness_randomly(N,size=5,alphabet=["a","b"],output=stdout):
 
     for i in range(N):

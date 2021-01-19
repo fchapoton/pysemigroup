@@ -186,7 +186,7 @@ class TransitionSemiGroup():
         #for x in colors_list:
         #      for y in x:
         if verbose:
-            print("computing box diagramm ...")
+            print("computing box diagram ...")
 
         box = self.box_representation(verbose=verbose)
         idempotents = self.idempotents()
@@ -372,7 +372,8 @@ class TransitionSemiGroup():
                 if x == self._automaton.identity_on_automata_ring():
                     self._identity = self._Representations[x]
                     return self._identity
-            raise ValueError("No indentity in this semigroup")
+            raise ValueError("No identity in this semigroup")
+
     def representent(self, v,verbose=False):
         r"""
         Return a representent of the equivalence class of the word u in the transition semigroup
@@ -681,7 +682,7 @@ class TransitionSemiGroup():
 
     def stability_index(self, verbose=False):
         r"""
-        Return the stablility index
+        Return the stability index.
 
         OUTPUT :
 

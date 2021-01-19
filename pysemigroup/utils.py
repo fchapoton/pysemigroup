@@ -1,9 +1,10 @@
 import os
 import tempfile
 import webbrowser
-import threading
 import pickle
+
 tmp = []
+
 GraphVizExt = ["bmp",
 "canon",
 "dot",
@@ -59,13 +60,15 @@ GraphVizExt = ["bmp",
 "webp",
 "xlib",
 "x11"]
+
+
 def save_graphviz(graphviz_str, filename, extension=None, directory=None, verbose=False):
-    (fd,file_dot) = tempfile.mkstemp(suffix=".dot",
-                                     dir=directory)
-    file_out = filename    
+    (fd, file_dot) = tempfile.mkstemp(suffix=".dot",
+                                      dir=directory)
+    file_out = filename
     l = file_out.split(".")
-    if extension == None:
-        extension = l[len(l)-1]
+    if extension is None:
+        extension = l[len(l) - 1]
     if extension not in GraphVizExt:
         raise ValueError("Not a valid Graphviz output format")
     f = open(fd, "w")
@@ -77,11 +80,12 @@ def save_graphviz(graphviz_str, filename, extension=None, directory=None, verbos
     if verbose:
         print("Graphviz Compilation:", compil)
     os.system(compil)
-    
-def view_graphviz(graphviz_str,save_to_file=None, extension="svg", directory=None, verbose=False):
-    if (save_to_file==None):
-        (fd,file_svg) = tempfile.mkstemp(suffix="."+extension,
-                                         dir=directory)
+
+
+def view_graphviz(graphviz_str, save_to_file=None, extension="svg", directory=None, verbose=False):
+    if save_to_file is None:
+        (fd, file_svg) = tempfile.mkstemp(suffix="." + extension,
+                                          dir=directory)
         open(fd).close()
     else:
         file_svg = save_to_file
@@ -90,26 +94,30 @@ def view_graphviz(graphviz_str,save_to_file=None, extension="svg", directory=Non
                   directory=directory,
                   verbose=verbose)
     webbrowser.open(file_svg)
-    
-def delete_file(s):
-     os.system('rm %s'% s)
 
-def save(obj,file_name):
-    f = open(file_name,"wb")
-    pickle.dump(obj,f)
-    f.close()
+
+def delete_file(s):
+    os.system('rm %s' % s)
+
+
+def save(obj, file_name):
+    with open(file_name, "wb") as f:
+        pickle.dump(obj, f)
+
+
 def load(file_name):
-    f = open(file_name,"rb")
-    obj = pickle.load(f)
-    f.close()
+    with open(file_name, "rb") as f:
+        obj = pickle.load(f)
     return obj
 
-def gcd(a,b):
+
+def gcd(a, b):
     """Compute the greatest common divisor of a and b"""
     while b > 0:
         a, b = b, a % b
     return a
-    
+
+
 def lcm(a, b):
     """Compute the lowest common multiple of a and b"""
     return a * b / gcd(a, b)

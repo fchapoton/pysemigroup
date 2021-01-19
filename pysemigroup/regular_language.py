@@ -17,7 +17,7 @@ EXAMPLES::
     sage: B = A.minimal_automaton()                           #not tested - 71s
     sage: C = A.minimal_automaton(algorithm="Brzozowski")     #not tested - 63s
     sage: D = A.minimal_automaton(algorithm="Moore")          #not tested - 54s
-    sage: B                         #not tested                                         
+    sage: B                         #not tested
     Automaton of 2402 states         #not tested
     sage: C         #not tested
     Automaton of 2425 states         #not tested
@@ -34,9 +34,9 @@ EXAMPLES::
 
 """
 from .automata import *
-import itertools                    
-    
-class RegularLanguage:    
+import itertools
+
+class RegularLanguage:
     def __init__(self, regex, letters=None):
         r"""
         INPUT:
@@ -47,11 +47,11 @@ class RegularLanguage:
         self._regex = regex
         if letters is None:
             s = regex
-            s = s.replace("(","")  
-            s = s.replace(")","")        
-            s = s.replace("^","")  
-            s = s.replace("x","")        
-            s = s.replace("*","")  
+            s = s.replace("(","")
+            s = s.replace(")","")
+            s = s.replace("^","")
+            s = s.replace("x","")
+            s = s.replace("*","")
             s = s.replace("+","")
             s = s.replace(" ","")
             for x in range(10):
@@ -65,12 +65,12 @@ class RegularLanguage:
     @classmethod
     def from_easy_regex(cls, regex,A=None):
             r"""
-            Generate a regular language using a simplify regex syntax. 
-            The alphabet is automatically compute. To use with caution, 
+            Generate a regular language using a simplify regex syntax.
+            The alphabet is automatically compute. To use with caution,
             since in a lot of cases, it will not produce the desire regular language.
             INPUT:
 
-            - ``alphabet`` -- list of letters 
+            - ``alphabet`` -- list of letters
 
             OUTPUT:
 
@@ -84,24 +84,24 @@ class RegularLanguage:
                 Regular language: (abc)*+(ad)* over alphabet set(['a', 'c', 'b', 'd'])
                 sage: RegularLanguage.from_easy_regex("(ab)^3+(cd)*")
                 Regular language: (ab)^3+(cd)* over alphabet set(['a', 'c', 'b', 'd'])
-            
+
                 sage: RegularLanguage.from_easy_regex("(xx)*+(xd)*")
                 Regular language: (xx)*+(xd)* over alphabet set(['x', 'd'])
 
             """
             if not(A):
                 s = str(regex)
-                s = s.replace("(","")  
-                s = s.replace(")","")        
-                s = s.replace("^","")  
-                s = s.replace("_star","")        
-                s = s.replace("*","")  
+                s = s.replace("(","")
+                s = s.replace(")","")
+                s = s.replace("^","")
+                s = s.replace("_star","")
+                s = s.replace("*","")
                 s = s.replace("+","")
                 s = s.replace("-","")
                 s = s.replace(" ","")
-                s = s.replace("A","")        
+                s = s.replace("A","")
                 for x in range(10):
-                    while (str(x) in s):           
+                    while (str(x) in s):
                         s = s.replace(str(x),"")
                 A = set(s)
             alph_str = "("
@@ -110,11 +110,11 @@ class RegularLanguage:
             alph_str = alph_str[0:len(alph_str)-1] + ")"
 
             regex = regex.replace("A",alph_str)
-            regex = regex.replace("1","(_empty_word)")  
+            regex = regex.replace("1","(_empty_word)")
             for x in A:
                for y in A:
                    regex = regex.replace(x+y,x+"."+y)
-            regex = regex.replace("*","**_star")  
+            regex = regex.replace("*","**_star")
             regex = regex.replace(")(",")*(")
             regex = regex.replace("_star(","_star*(")
             for x in A:
@@ -122,13 +122,13 @@ class RegularLanguage:
                regex = regex.replace(")"+x,")*"+x)
                regex = regex.replace("_star"+x,"_star*"+x)
                regex = regex.replace(x+x,x+"*"+x)
-            regex = regex.replace(".","*")           
+            regex = regex.replace(".","*")
             return RegularLanguage(regex,letters=A)
     def letters(self):
         r"""
         """
         return set(self._letters)
-        
+
     def __repr__(self):
         r"""
         String representation
@@ -145,17 +145,17 @@ class RegularLanguage:
         s = s.replace("_star","*")
         s = s.replace("1e",'1')
         return "Regular language: %s over alphabet %s" % (s, self._letters)
-        
+
     def __iter__(self):
         r"""
         Return an iterator of the language.
-        
+
         NOTE::
-         
+
             Exponential complexity. TODO: improve it.
-        
+
         EXAMPLES::
-        
+
             sage: from pysemigroup import RegularLanguage
             sage: L = RegularLanguage("(a*b)^_star",["a","b"])
             sage: it = iter(L)
@@ -172,22 +172,22 @@ class RegularLanguage:
             for p in itertools.product(*(letters,)*n):
                 if p in self:
                     yield ''.join(p).replace(" ","")
-        
+
     def __contains__(self, word):
         r"""
         Return whether word is in the language.
-        
+
         EXAMPLES::
-        
+
             sage: from pysemigroup import RegularLanguage
             sage: L = RegularLanguage("(a*b)^_star",["a","b"])
             sage: "ababababab" in L
             True
             sage: "abababaabab" in L
             False
-            
+
         Other notation::
-        
+
             sage: ("a","b") in L
             True
             sage: ["b","a"] in L
@@ -197,7 +197,7 @@ class RegularLanguage:
         return self.automaton().is_accepted(word)
     def __eq__(self, other):
         r"""
-        Return wheter self is equal to other.
+        Return whether self is equal to other.
 
         INPUT:
 
@@ -216,9 +216,9 @@ class RegularLanguage:
             sage: S = RegularLanguage("b*a*a", ['a', 'b'])
             sage: R == S
             False
-            
+
         ::
-            
+
             sage: L = RegularLanguage("a+b+c",["a","b","c"])
             sage: L == L
             True
@@ -229,13 +229,13 @@ class RegularLanguage:
             sage: L == L3
             False
 
-        """    
+        """
         R = (self-other)+(other-self)
         return R.is_empty()
-        
+
     def is_empty(self):
         r"""
-        Return wheter self is empty.
+        Return whether self is empty.
 
         INPUT:
 
@@ -256,7 +256,7 @@ class RegularLanguage:
             True
 
 
-        """    
+        """
         A = self.automaton()
         return not A.is_finite_state_reachable()
 
@@ -311,10 +311,10 @@ class RegularLanguage:
         regex = "(%s+%s)" % (self._regex, other._regex)
         letters = self.letters() | other.letters()
         return RegularLanguage(regex, letters=letters)
-    
+
     def __sub__(self, other):
         r"""
-        Difference symetric of self by other language.
+        Difference symmetric of self by other language.
 
         OUTPUT:
 
@@ -323,8 +323,8 @@ class RegularLanguage:
         EXAMPLES::
 
             sage: from pysemigroup import RegularLanguage
-            sage: L = RegularLanguage("(a*b)^_star", ['a', 'b']) 
-            sage: R = RegularLanguage("a*b", ['a', 'b'])     
+            sage: L = RegularLanguage("(a*b)^_star", ['a', 'b'])
+            sage: R = RegularLanguage("a*b", ['a', 'b'])
             sage: L-R
             Regular language: (((ab)*)-(ab)) over alphabet set(['a', 'b'])
 
@@ -335,7 +335,7 @@ class RegularLanguage:
 
     def __neg__(self):
         r"""
-        Complement of self             
+        Complement of self
 
         OUTPUT:
 
@@ -348,7 +348,7 @@ class RegularLanguage:
             sage: -L
             Regular language: -(ab)* over alphabet set(['a', 'b'])
 
-        
+
 
         """
         regex = "-%s" % self._regex
@@ -371,16 +371,16 @@ class RegularLanguage:
         EXAMPLES::
 
             sage: from pysemigroup import RegularLanguage
-            sage: L = RegularLanguage("(a*b)^_star", ['a', 'b']) 
-            sage: R = RegularLanguage("a*b", ['a', 'b'])     
+            sage: L = RegularLanguage("(a*b)^_star", ['a', 'b'])
+            sage: R = RegularLanguage("a*b", ['a', 'b'])
             sage: L.intersection(R)
             Regular language: (((ab)*)-(-(ab))) over alphabet set(['a', 'b'])
-            
+
 
         """
         regex = "((%s)-(-(%s)))" % (self._regex, other._regex)
         letters = self.letters() | other.letters()
-        return RegularLanguage(regex, letters)        
+        return RegularLanguage(regex, letters)
 
     def kleene_star(self):
         r"""
@@ -454,8 +454,8 @@ class RegularLanguage:
 
         """
         if self._regex == "":
-            return Automaton.from_empty_string(self.letters())        
-        else:  
+            return Automaton.from_empty_string(self.letters())
+        else:
             for letter in self.letters():
                 exec(letter+" = Automaton.from_letter(letter,alphabet=self.letters())")
             _empty_word = Automaton.from_empty_string(self.letters())
@@ -501,7 +501,7 @@ class RegularLanguage:
         automaton
 
         EXAMPLES::
-        
+
             sage: from pysemigroup import RegularLanguage
             sage: RegularLanguage("a*a",["a"]).automaton_minimal_deterministic()
             Automaton of 4 states
@@ -512,33 +512,33 @@ class RegularLanguage:
             sage: RegularLanguage("a^5",["a"]).automaton_minimal_deterministic()
             Automaton of 7 states
             sage: RegularLanguage("((a^5)+b*b)^_star",["a","b"]).automaton_minimal_deterministic()
-            Automaton of 7 states 
+            Automaton of 7 states
             sage: RegularLanguage("a^_star",["a"]).automaton_minimal_deterministic()
             Automaton of 1 states
 
         """
         return self.automaton().minimal_automaton(algorithm=algorithm)
-  
+
     def syntactic_semigroup(self):
         return TransitionSemiGroup(self.automaton_minimal_deterministic(),monoid=False)
 
     def syntactic_monoid(self):
         return TransitionSemiGroup(self.automaton_minimal_deterministic())
-  
+
     def view(self):
-        self.syntactic_monoid().view()    
-        self.automaton_minimal_deterministic().view()    
+        self.syntactic_monoid().view()
+        self.automaton_minimal_deterministic().view()
 
     def is_equation_satisfied(self, eq, variables, monoid=True, verbose=False):
         r"""
         EXAMPLES:
 
-           
+
 
         """
         if monoid:
             return self.syntactic_monoid().is_equation_satisfied(eq,variables,verbose=verbose)
-        else:                                        
+        else:
             return self.syntactic_semigroup().is_equation_satisfied(eq,variables,verbose=verbose)
-    
-                   
+
+

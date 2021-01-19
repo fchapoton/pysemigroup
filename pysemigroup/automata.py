@@ -40,7 +40,7 @@ class Automaton(object):
         r"""
         INPUT:
 
-        - ``transitions`` - dictionnary of (state, letter) -> list of states
+        - ``transitions`` - dictionary of (state, letter) -> list of states
         - ``initial_states`` - list of states
         - ``final_states`` - list of states
         - ``states`` - set of states
@@ -907,10 +907,10 @@ class Automaton(object):
 
             return d
 
-
     def is_equivalent(self, u, v):
         r"""
-        Return wether u is syntatically equivalent to v for Automaton self
+        Return whether u is syntatically equivalent to v for Automaton self
+
         INPUT :
         -  ``self`` -  Automaton
          -  ``u`` -  string
@@ -1055,11 +1055,11 @@ class Automaton(object):
             return RingMatrix((len(self._states),len(self._states)),d)
         raise ValueError("Automaton type"+self._type+" is unsupported yet")
 
-
     def letter_to_algebra(self, letter, verbose=True):
         r"""
         return a matrix representing letter action on state.
-        The return type depend on the choosed of aut_type in init. Only work
+
+        The return type depend on the choice of aut_type in init. Only work
         for boolean and buchi type.
         INPUT :
         -  ``self`` -  Automaton
